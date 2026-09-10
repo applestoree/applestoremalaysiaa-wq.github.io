@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apple Produk Kelola Produk v5</title>
+    <title>Apple Produk Kelola Produk v7 Cloudinary</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts Inter -->
@@ -48,14 +48,17 @@
                 </div>
                 <div>
                     <h1 class="font-semibold text-sm tracking-tight leading-tight">Apple Kelola</h1>
-                    <p class="text-[10px] text-gray-500">v5 Full Schema</p>
+                    <p class="text-[10px] text-gray-500">v7 Cloudinary Ready</p>
                 </div>
             </div>
 
-            <div class="flex items-center space-x-2">
-                <button onclick="app.openCreatePage()" class="inline-flex items-center space-x-1.5 bg-black hover:bg-gray-800 text-white px-3 py-1.5 rounded-full text-xs font-medium transition shadow-sm">
+            <div class="flex items-center space-x-1.5">
+                <button onclick="app.openCreatePage()" class="inline-flex items-center space-x-1 bg-black hover:bg-gray-800 text-white px-2.5 py-1.5 rounded-full text-xs font-medium transition shadow-sm">
                     <i class="fa-solid fa-plus text-[10px]"></i>
                     <span>Tambah</span>
+                </button>
+                <button onclick="app.exportData()" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 transition" title="Ekspor Data JSON">
+                    <i class="fa-solid fa-download text-xs"></i>
                 </button>
                 <button onclick="app.fetchProducts()" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 transition" title="Refresh Data">
                     <i class="fa-solid fa-rotate text-xs" id="refresh-icon"></i>
@@ -102,7 +105,7 @@
                 <!-- Loading State -->
                 <div id="loading-state" class="py-16 flex flex-col items-center justify-center text-center">
                     <div class="w-10 h-10 border-3 border-gray-200 border-t-black rounded-full animate-spin mb-3"></div>
-                    <p class="text-gray-500 font-medium text-xs">Menghubungkan ke Supabase...</p>
+                    <p class="text-gray-500 font-medium text-xs">Menghubungkan ke server...</p>
                 </div>
 
                 <!-- Empty State -->
@@ -123,6 +126,7 @@
                 </div>
             </div>
 
+            <!-- Form Sub-Page -->
             <div id="view-form-page" class="hidden absolute inset-0 bg-[#fbfbfd] z-30 flex flex-col">
                 <!-- Sub-Page Header -->
                 <div class="px-4 py-3.5 border-b border-appleBorder/60 flex items-center justify-between bg-white/80 backdrop-blur-md shrink-0">
@@ -178,30 +182,12 @@
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-3">
-                            <div class="space-y-1">
-                                <label class="text-[11px] font-semibold text-gray-700 uppercase tracking-wider">Brand</label>
-                                <input type="text" id="input-brand" value="Apple" placeholder="Apple"
-                                    class="w-full px-3 py-2.5 bg-white border border-appleBorder/60 rounded-xl text-xs focus:border-black focus:outline-none transition shadow-sm">
-                            </div>
-
+                        <div class="grid grid-cols-1 gap-3">
                             <div class="space-y-1">
                                 <label class="text-[11px] font-semibold text-gray-700 uppercase tracking-wider">Tipe Produk</label>
                                 <input type="text" id="input-product_type" placeholder="Smartphones"
                                     class="w-full px-3 py-2.5 bg-white border border-appleBorder/60 rounded-xl text-xs focus:border-black focus:outline-none transition shadow-sm">
                             </div>
-                        </div>
-
-                        <div class="space-y-1">
-                            <label class="text-[11px] font-semibold text-gray-700 uppercase tracking-wider">Link URL Produk</label>
-                            <input type="url" id="input-link" placeholder="https://apple.com/id/iphone"
-                                class="w-full px-3 py-2.5 bg-white border border-appleBorder/60 rounded-xl text-xs focus:border-black focus:outline-none transition shadow-sm">
-                        </div>
-
-                        <div class="space-y-1">
-                            <label class="text-[11px] font-semibold text-gray-700 uppercase tracking-wider">Google Product Category</label>
-                            <input type="text" id="input-google_product_category" placeholder="Electronics > Communications..."
-                                class="w-full px-3 py-2.5 bg-white border border-appleBorder/60 rounded-xl text-xs focus:border-black focus:outline-none transition shadow-sm">
                         </div>
 
                         <div class="grid grid-cols-2 gap-3">
@@ -210,59 +196,72 @@
                                 <input type="number" id="input-quantity_to_sell_on_facebook" value="10"
                                     class="w-full px-3 py-2.5 bg-white border border-appleBorder/60 rounded-xl text-xs focus:border-black focus:outline-none transition shadow-sm">
                             </div>
+                        </div>
 
+                        <!-- Hidden fields defaults for brand, link, google_product_category, headline, band -->
+                        <div class="hidden">
+                            <input type="text" id="input-brand" value="Apple">
+                            <input type="url" id="input-link" value="">
+                            <input type="text" id="input-google_product_category" value="">
+                            <input type="text" id="input-headline" value="">
+                            <input type="text" id="input-band" value="">
+                        </div>
+
+                        <div class="bg-gray-50 p-3 rounded-2xl border border-appleBorder/60 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="text-xs font-bold text-gray-800 uppercase tracking-wider">Promo Flashsale</h4>
+                                    <p class="text-[10px] text-gray-500">Aktifkan untuk menjadikan custom_label_0 = "flashsale"</p>
+                                </div>
+                                <button type="button" id="promo-toggle-btn" onclick="app.toggleFlashsalePromo()" class="px-3 py-1.5 rounded-full text-xs font-semibold transition bg-gray-200 text-gray-700">
+                                    Nonaktif
+                                </button>
+                            </div>
+                            <input type="hidden" id="input-custom_label_0" value="">
+                        </div>
+
+                        <!-- Hidden custom labels 1 to 5 for internal payload retention -->
+                        <div class="hidden">
+                            <input type="text" id="input-custom_label_1" value="">
+                            <input type="text" id="input-custom_label_2" value="">
+                            <input type="text" id="input-custom_label_3" value="">
+                            <input type="text" id="input-custom_label_4" value="">
+                            <input type="text" id="input-custom_label_5" value="">
+                        </div>
+
+                        <!-- Variant Color & Cloudinary Upload -->
+                        <div class="bg-gray-50 p-3 rounded-2xl border border-appleBorder/60 space-y-3">
+                            <h4 class="text-xs font-bold text-gray-800 uppercase tracking-wider">Variant Color & Cloudinary Images</h4>
+                            
                             <div class="space-y-1">
-                                <label class="text-[11px] font-semibold text-gray-700 uppercase tracking-wider">Headline</label>
-                                <input type="text" id="input-headline" placeholder="Titanium..."
-                                    class="w-full px-3 py-2.5 bg-white border border-appleBorder/60 rounded-xl text-xs focus:border-black focus:outline-none transition shadow-sm">
+                                <label class="text-[10px] font-semibold text-gray-600">Color Name</label>
+                                <input type="text" id="input-color" placeholder="Natural Titanium" class="w-full px-2.5 py-2 bg-white border border-appleBorder/60 rounded-xl text-xs">
                             </div>
-                        </div>
 
-                        <div class="bg-gray-50 p-3 rounded-2xl border border-appleBorder/60 space-y-3">
-                            <h4 class="text-xs font-bold text-gray-800 uppercase tracking-wider">Custom Labels (0 - 5)</h4>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div class="space-y-1">
-                                    <label class="text-[10px] font-semibold text-gray-600">CustomLabel 0</label>
-                                    <input type="text" id="input-custom_label_0" placeholder="Flagship" class="w-full px-2.5 py-2 bg-white border border-appleBorder/60 rounded-xl text-xs">
-                                </div>
-                                <div class="space-y-1">
-                                    <label class="text-[10px] font-semibold text-gray-600">CustomLabel 1</label>
-                                    <input type="text" id="input-custom_label_1" placeholder="2024" class="w-full px-2.5 py-2 bg-white border border-appleBorder/60 rounded-xl text-xs">
-                                </div>
-                                <div class="space-y-1">
-                                    <label class="text-[10px] font-semibold text-gray-600">CustomLabel 2</label>
-                                    <input type="text" id="input-custom_label_2" placeholder="Promo" class="w-full px-2.5 py-2 bg-white border border-appleBorder/60 rounded-xl text-xs">
-                                </div>
-                                <div class="space-y-1">
-                                    <label class="text-[10px] font-semibold text-gray-600">CustomLabel 3</label>
-                                    <input type="text" id="input-custom_label_3" placeholder="Tier 1" class="w-full px-2.5 py-2 bg-white border border-appleBorder/60 rounded-xl text-xs">
-                                </div>
-                                <div class="space-y-1">
-                                    <label class="text-[10px] font-semibold text-gray-600">CustomLabel 4</label>
-                                    <input type="text" id="input-custom_label_4" placeholder="Apple" class="w-full px-2.5 py-2 bg-white border border-appleBorder/60 rounded-xl text-xs">
-                                </div>
-                                <div class="space-y-1">
-                                    <label class="text-[10px] font-semibold text-gray-600">CustomLabel 5</label>
-                                    <input type="text" id="input-custom_label_5" placeholder="New" class="w-full px-2.5 py-2 bg-white border border-appleBorder/60 rounded-xl text-xs">
+                            <!-- Image Link with Cloudinary Upload -->
+                            <div class="space-y-1">
+                                <label class="text-[10px] font-semibold text-gray-600">Image Link (Utama)</label>
+                                <div class="flex gap-2">
+                                    <input type="url" id="input-image_link" placeholder="https://res.cloudinary.com/..." class="flex-1 px-2.5 py-2 bg-white border border-appleBorder/60 rounded-xl text-xs">
+                                    <label class="cursor-pointer bg-black text-white px-3 py-2 rounded-xl text-xs font-medium hover:bg-gray-800 transition flex items-center space-x-1 shrink-0">
+                                        <i class="fa-solid fa-cloud-arrow-up text-xs"></i>
+                                        <span>Upload</span>
+                                        <input type="file" accept="image/*" class="hidden" onchange="app.handleCloudinaryUpload(event, 'input-image_link')">
+                                    </label>
                                 </div>
                             </div>
-                        </div>
 
-                        <div class="bg-gray-50 p-3 rounded-2xl border border-appleBorder/60 space-y-3">
-                            <h4 class="text-xs font-bold text-gray-800 uppercase tracking-wider">Variant Color & Image</h4>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div class="space-y-1">
-                                    <label class="text-[10px] font-semibold text-gray-600">Color Name</label>
-                                    <input type="text" id="input-color" placeholder="Natural Titanium" class="w-full px-2.5 py-2 bg-white border border-appleBorder/60 rounded-xl text-xs">
+                            <!-- Additional Image Link Dynamic Rows with (+) and (-) -->
+                            <div class="space-y-2 pt-1">
+                                <div class="flex justify-between items-center">
+                                    <label class="text-[10px] font-semibold text-gray-600">Additional Image Links (Pisahkan koma atau gunakan tombol)</label>
+                                    <button type="button" onclick="app.addAdditionalImageRow()" class="text-[10px] bg-gray-200 hover:bg-gray-300 text-gray-800 px-2 py-0.5 rounded font-medium">
+                                        <i class="fa-solid fa-plus mr-1"></i> Tambah Field
+                                    </button>
                                 </div>
-                                <div class="space-y-1">
-                                    <label class="text-[10px] font-semibold text-gray-600">Image Link</label>
-                                    <input type="url" id="input-image_link" placeholder="https://..." class="w-full px-2.5 py-2 bg-white border border-appleBorder/60 rounded-xl text-xs">
+                                <div id="additional-images-container" class="space-y-2">
+                                    <!-- Dynamic rows injected here -->
                                 </div>
-                            </div>
-                            <div class="space-y-1 pt-1">
-                                <label class="text-[10px] font-semibold text-gray-600">Additional Image Link</label>
-                                <input type="url" id="input-additional_image_link" placeholder="https://..." class="w-full px-2.5 py-2 bg-white border border-appleBorder/60 rounded-xl text-xs">
                             </div>
                         </div>
 
@@ -284,22 +283,30 @@
                             </div>
                         </div>
 
-                        <div class="space-y-1">
-                            <label class="text-[11px] font-semibold text-gray-700 uppercase tracking-wider">Main Features (Koma-separated)</label>
-                            <input type="text" id="input-main_features" placeholder="A17 Pro chip, Titanium design"
-                                class="w-full px-3 py-2.5 bg-white border border-appleBorder/60 rounded-xl text-xs focus:border-black focus:outline-none transition shadow-sm">
+                        <!-- Main Features Dynamic Rows -->
+                        <div class="bg-gray-50 p-3 rounded-2xl border border-appleBorder/60 space-y-2">
+                            <div class="flex justify-between items-center">
+                                <label class="text-xs font-bold text-gray-800 uppercase tracking-wider">Main Features</label>
+                                <button type="button" onclick="app.addFeatureRow('main-features-container', '')" class="text-[10px] bg-gray-200 hover:bg-gray-300 text-gray-800 px-2 py-0.5 rounded font-medium">
+                                    <i class="fa-solid fa-plus mr-1"></i> Tambah Fitur Utama
+                                </button>
+                            </div>
+                            <div id="main-features-container" class="space-y-2">
+                                <!-- Dynamic rows injected here -->
+                            </div>
                         </div>
 
-                        <div class="space-y-1">
-                            <label class="text-[11px] font-semibold text-gray-700 uppercase tracking-wider">Sub Features (Koma-separated)</label>
-                            <input type="text" id="input-sub_features" placeholder="Action button, USB-C"
-                                class="w-full px-3 py-2.5 bg-white border border-appleBorder/60 rounded-xl text-xs focus:border-black focus:outline-none transition shadow-sm">
-                        </div>
-
-                        <div class="space-y-1">
-                            <label class="text-[11px] font-semibold text-gray-700 uppercase tracking-wider">Band (Watch)</label>
-                            <input type="text" id="input-band" placeholder="Solo Loop"
-                                class="w-full px-3 py-2.5 bg-white border border-appleBorder/60 rounded-xl text-xs focus:border-black focus:outline-none transition shadow-sm">
+                        <!-- Sub Features Dynamic Rows -->
+                        <div class="bg-gray-50 p-3 rounded-2xl border border-appleBorder/60 space-y-2">
+                            <div class="flex justify-between items-center">
+                                <label class="text-xs font-bold text-gray-800 uppercase tracking-wider">Sub Features</label>
+                                <button type="button" onclick="app.addFeatureRow('sub-features-container', '')" class="text-[10px] bg-gray-200 hover:bg-gray-300 text-gray-800 px-2 py-0.5 rounded font-medium">
+                                    <i class="fa-solid fa-plus mr-1"></i> Tambah Sub Fitur
+                                </button>
+                            </div>
+                            <div id="sub-features-container" class="space-y-2">
+                                <!-- Dynamic rows injected here -->
+                            </div>
                         </div>
 
                         <!-- Bottom Action Bar -->
@@ -339,6 +346,8 @@
 
     <script>
         const API_BASE_URL = "https://jhpbtooefyzdndstlzva.supabase.co/functions/v1/apple-produk-kelola-produk";
+        const CLOUDINARY_CLOUD_NAME = "daj5cu840";
+        const CLOUDINARY_UPLOAD_PRESET = "webflow";
 
         class AppManager {
             constructor() {
@@ -387,6 +396,144 @@
                 }, 4000);
             }
 
+            async handleCloudinaryUpload(event, targetInputId) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const inputEl = document.getElementById(targetInputId);
+                const uploadBtnLabel = event.target.closest('label');
+                const originalHtml = uploadBtnLabel ? uploadBtnLabel.innerHTML : '';
+                
+                if (uploadBtnLabel) {
+                    uploadBtnLabel.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-xs"></i><span>Uploading...</span>`;
+                }
+
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+                try {
+                    const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Gagal upload ke Cloudinary');
+                    }
+
+                    const data = await response.json();
+                    if (data.secure_url) {
+                        if (inputEl) inputEl.value = data.secure_url;
+                        this.showToast('Berhasil upload gambar ke Cloudinary!', 'success');
+                    } else {
+                        throw new Error('URL secure tidak ditemukan dari Cloudinary');
+                    }
+                } catch (error) {
+                    console.error('Cloudinary error:', error);
+                    this.showToast(`Upload error: ${error.message}`, 'error');
+                } finally {
+                    if (uploadBtnLabel) {
+                        uploadBtnLabel.innerHTML = originalHtml;
+                    }
+                    event.target.value = '';
+                }
+            }
+
+            async handleCloudinaryUploadForRow(event, inputId) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const inputEl = document.getElementById(inputId);
+                const uploadBtn = event.target.closest('button');
+                const originalHtml = uploadBtn ? uploadBtn.innerHTML : '';
+                
+                if (uploadBtn) {
+                    uploadBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i>`;
+                }
+
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+                try {
+                    const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) throw new Error('Gagal upload');
+
+                    const data = await response.json();
+                    if (data.secure_url && inputEl) {
+                        inputEl.value = data.secure_url;
+                        this.showToast('Berhasil upload gambar tambahan!', 'success');
+                    }
+                } catch (error) {
+                    this.showToast(`Upload error: ${error.message}`, 'error');
+                } finally {
+                    if (uploadBtn) uploadBtn.innerHTML = originalHtml;
+                    event.target.value = '';
+                }
+            }
+
+            addAdditionalImageRow(urlValue = '') {
+                const container = document.getElementById('additional-images-container');
+                if (!container) return;
+
+                const rowId = 'add_img_' + Math.random().toString(36).substring(2, 9);
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'flex items-center gap-1.5 additional-image-row';
+                rowDiv.innerHTML = `
+                    <input type="url" id="${rowId}" value="${urlValue}" placeholder="https://res.cloudinary.com/..." class="flex-1 px-2.5 py-1.5 bg-white border border-appleBorder/60 rounded-xl text-xs">
+                    <label class="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 px-2.5 py-1.5 rounded-xl text-xs font-medium transition flex items-center justify-center shrink-0" title="Upload Cloudinary">
+                        <i class="fa-solid fa-cloud-arrow-up text-xs"></i>
+                        <input type="file" accept="image/*" class="hidden" onchange="app.handleCloudinaryUploadForRow(event, '${rowId}')">
+                    </label>
+                    <button type="button" onclick="this.closest('.additional-image-row').remove()" class="w-7 h-7 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl flex items-center justify-center shrink-0" title="Hapus baris (-)">
+                        <i class="fa-solid fa-minus text-xs"></i>
+                    </button>
+                    <button type="button" onclick="app.addAdditionalImageRow()" class="w-7 h-7 bg-black hover:bg-gray-800 text-white rounded-xl flex items-center justify-center shrink-0" title="Tambah baris (+)">
+                        <i class="fa-solid fa-plus text-xs"></i>
+                    </button>
+                `;
+                container.appendChild(rowDiv);
+            }
+
+            addFeatureRow(containerId, value = '') {
+                const container = document.getElementById(containerId);
+                if (!container) return;
+
+                const rowId = 'feat_' + Math.random().toString(36).substring(2, 9);
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'flex items-center gap-1.5 feature-row';
+                rowDiv.innerHTML = `
+                    <input type="text" id="${rowId}" value="${value}" placeholder="misal: A17 Pro chip" class="flex-1 px-2.5 py-1.5 bg-white border border-appleBorder/60 rounded-xl text-xs">
+                    <button type="button" onclick="this.closest('.feature-row').remove()" class="w-7 h-7 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl flex items-center justify-center shrink-0" title="Hapus (-)">
+                        <i class="fa-solid fa-minus text-xs"></i>
+                    </button>
+                    <button type="button" onclick="app.addFeatureRow('${containerId}')" class="w-7 h-7 bg-black hover:bg-gray-800 text-white rounded-xl flex items-center justify-center shrink-0" title="Tambah (+)">
+                        <i class="fa-solid fa-plus text-xs"></i>
+                    </button>
+                `;
+                container.appendChild(rowDiv);
+            }
+
+            exportData() {
+                if (!this.products || this.products.length === 0) {
+                    this.showToast('Tidak ada data untuk diekspor', 'error');
+                    return;
+                }
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.products, null, 2));
+                const downloadAnchor = document.createElement('a');
+                downloadAnchor.setAttribute("href", dataStr);
+                downloadAnchor.setAttribute("download", `apple_products_export_${new Date().toISOString().slice(0,10)}.json`);
+                document.body.appendChild(downloadAnchor);
+                downloadAnchor.click();
+                downloadAnchor.remove();
+                this.showToast('Data berhasil diekspor ke JSON', 'success');
+            }
+
             async fetchProducts() {
                 const loadingEl = document.getElementById('loading-state');
                 const emptyEl = document.getElementById('empty-state');
@@ -401,14 +548,10 @@
                 try {
                     const response = await fetch(API_BASE_URL, {
                         method: 'GET',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
+                        headers: { 'Content-Type': 'application/json' }
                     });
 
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}`);
-                    }
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
                     const result = await response.json();
                     
@@ -455,13 +598,8 @@
                 });
             }
 
-            handleSearch() {
-                this.applyFilters();
-            }
-
-            handleFilter() {
-                this.applyFilters();
-            }
+            handleSearch() { this.applyFilters(); }
+            handleFilter() { this.applyFilters(); }
 
             applyFilters() {
                 const searchInput = document.getElementById('search-input');
@@ -502,7 +640,7 @@
                         }
                     } catch (e) {}
                 }
-                return p.image_link || p.ImageLink || p.image || null;
+                return p.image_link || p.ImageLink || null;
             }
 
             extractVariantSizeLabel(p) {
@@ -550,10 +688,8 @@
                     const description = p.description || p.Description || 'Tidak ada deskripsi.';
                     const productType = p.product_type || p.ProductType || 'Apple Device';
                     const availability = p.availability || p.Availability || 'in stock';
-                    const brand = p.brand || p.Brand || 'Apple';
                     const colorObj = p.variant_color || p.VariantColor;
                     const sizeLabel = this.extractVariantSizeLabel(p);
-                    const link = p.link || p.Link;
                     const imageLink = this.extractVariantImage(p);
 
                     let badgeColor = 'bg-green-100 text-green-700';
@@ -588,8 +724,7 @@
                             </div>
                         </div>
 
-                        <div class="pt-3 border-t border-gray-100 flex items-center justify-between">
-                            ${link ? `<a href="${link}" target="_blank" class="text-[11px] text-appleBlue hover:underline flex items-center space-x-1 font-medium"><i class="fa-solid fa-arrow-up-right-from-square"></i><span>Link</span></a>` : '<span></span>'}
+                        <div class="pt-3 border-t border-gray-100 flex items-center justify-end">
                             <div class="flex items-center space-x-1.5">
                                 <button onclick="app.openEditPage('${id}')" class="px-2.5 py-1 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 text-[11px] font-medium transition flex items-center space-x-1">
                                     <i class="fa-solid fa-pen-to-square"></i>
@@ -626,10 +761,48 @@
                 document.getElementById('product-form').reset();
                 document.getElementById('input-brand').value = 'Apple';
                 document.getElementById('input-quantity_to_sell_on_facebook').value = '10';
+                
+                // Reset flashsale promo toggle to inactive
+                const promoBtn = document.getElementById('promo-toggle-btn');
+                const customLabel0Input = document.getElementById('input-custom_label_0');
+                if (promoBtn && customLabel0Input) {
+                    customLabel0Input.value = '';
+                    promoBtn.className = 'px-3 py-1.5 rounded-full text-xs font-semibold transition bg-gray-200 text-gray-700';
+                    promoBtn.innerText = 'Nonaktif';
+                }
+
+                // Reset additional images to 1 row
+                document.getElementById('additional-images-container').innerHTML = '';
+                this.addAdditionalImageRow();
+
+                // Reset main and sub features to 1 row each
+                document.getElementById('main-features-container').innerHTML = '';
+                this.addFeatureRow('main-features-container');
+
+                document.getElementById('sub-features-container').innerHTML = '';
+                this.addFeatureRow('sub-features-container');
 
                 document.getElementById('view-list').classList.add('hidden');
                 document.getElementById('main-header').classList.add('hidden');
                 document.getElementById('view-form-page').classList.remove('hidden');
+            }
+
+            toggleFlashsalePromo() {
+                const customLabel0Input = document.getElementById('input-custom_label_0');
+                const promoBtn = document.getElementById('promo-toggle-btn');
+                if (!customLabel0Input || !promoBtn) return;
+
+                if (customLabel0Input.value === 'flashsale') {
+                    customLabel0Input.value = '';
+                    promoBtn.className = 'px-3 py-1.5 rounded-full text-xs font-semibold transition bg-gray-200 text-gray-700';
+                    promoBtn.innerText = 'Nonaktif';
+                    this.showToast('Promo Flashsale dinonaktifkan', 'info');
+                } else {
+                    customLabel0Input.value = 'flashsale';
+                    promoBtn.className = 'px-3 py-1.5 rounded-full text-xs font-semibold transition bg-black text-white shadow-sm';
+                    promoBtn.innerText = 'Aktif (Flashsale)';
+                    this.showToast('Promo Flashsale diaktifkan!', 'success');
+                }
             }
 
             openEditPage(itemGroupId) {
@@ -656,31 +829,59 @@
                 document.getElementById('input-headline').value = product.headline || product.Headline || '';
                 document.getElementById('input-band').value = product.band || product.Band || '';
 
-                // Custom labels 0-5
-                document.getElementById('input-custom_label_0').value = product.custom_label_0 || product.CustomLabel0 || '';
+                // Custom label 0 promo toggle
+                const valCustomLabel0 = product.custom_label_0 || product.CustomLabel0 || '';
+                const customLabel0Input = document.getElementById('input-custom_label_0');
+                const promoBtn = document.getElementById('promo-toggle-btn');
+                if (customLabel0Input && promoBtn) {
+                    if (valCustomLabel0 === 'flashsale') {
+                        customLabel0Input.value = 'flashsale';
+                        promoBtn.className = 'px-3 py-1.5 rounded-full text-xs font-semibold transition bg-black text-white shadow-sm';
+                        promoBtn.innerText = 'Aktif (Flashsale)';
+                    } else {
+                        customLabel0Input.value = valCustomLabel0;
+                        promoBtn.className = 'px-3 py-1.5 rounded-full text-xs font-semibold transition bg-gray-200 text-gray-700';
+                        promoBtn.innerText = valCustomLabel0 ? valCustomLabel0 : 'Nonaktif';
+                    }
+                }
+
+                // Hidden custom labels 1-5
                 document.getElementById('input-custom_label_1').value = product.custom_label_1 || product.CustomLabel1 || '';
                 document.getElementById('input-custom_label_2').value = product.custom_label_2 || product.CustomLabel2 || '';
                 document.getElementById('input-custom_label_3').value = product.custom_label_3 || product.CustomLabel3 || '';
                 document.getElementById('input-custom_label_4').value = product.custom_label_4 || product.CustomLabel4 || '';
                 document.getElementById('input-custom_label_5').value = product.custom_label_5 || product.CustomLabel5 || '';
 
-                // Variant Color extraction
+                // Variant Color & Images
                 const vc = product.variant_color || product.VariantColor;
+                const addImgContainer = document.getElementById('additional-images-container');
+                addImgContainer.innerHTML = '';
+
+                let addImgs = [];
                 if (Array.isArray(vc) && vc.length > 0) {
                     document.getElementById('input-color').value = vc[0].color || '';
                     document.getElementById('input-image_link').value = vc[0].image_link || '';
-                    document.getElementById('input-additional_image_link').value = vc[0].additional_image_link || '';
+                    addImgs = vc[0].additional_image_link || [];
                 } else if (typeof vc === 'string') {
                     try {
                         const parsed = JSON.parse(vc);
                         if (Array.isArray(parsed) && parsed.length > 0) {
                             document.getElementById('input-color').value = parsed[0].color || '';
                             document.getElementById('input-image_link').value = parsed[0].image_link || '';
-                            document.getElementById('input-additional_image_link').value = parsed[0].additional_image_link || '';
+                            addImgs = parsed[0].additional_image_link || [];
                         }
                     } catch(e) {
                         document.getElementById('input-color').value = vc;
                     }
+                } else {
+                    document.getElementById('input-image_link').value = product.image_link || product.ImageLink || '';
+                }
+
+                // Render additional image rows
+                if (Array.isArray(addImgs) && addImgs.length > 0) {
+                    addImgs.forEach(url => this.addAdditionalImageRow(url));
+                } else {
+                    this.addAdditionalImageRow();
                 }
 
                 // Variant Size extraction
@@ -702,11 +903,35 @@
                     }
                 }
 
+                // Main Features rows
                 const mainFeatures = product.main_features || product.MainFeatures;
-                document.getElementById('input-main_features').value = Array.isArray(mainFeatures) ? mainFeatures.join(', ') : (mainFeatures || '');
+                const mainFeatContainer = document.getElementById('main-features-container');
+                mainFeatContainer.innerHTML = '';
+                let mainList = [];
+                if (Array.isArray(mainFeatures)) mainList = mainFeatures;
+                else if (typeof mainFeatures === 'string' && mainFeatures.trim()) {
+                    mainList = mainFeatures.split(',').map(s => s.trim()).filter(Boolean);
+                }
+                if (mainList.length > 0) {
+                    mainList.forEach(feat => this.addFeatureRow('main-features-container', feat));
+                } else {
+                    this.addFeatureRow('main-features-container');
+                }
 
+                // Sub Features rows
                 const subFeatures = product.sub_features || product.SubFeatures;
-                document.getElementById('input-sub_features').value = Array.isArray(subFeatures) ? subFeatures.join(', ') : (subFeatures || '');
+                const subFeatContainer = document.getElementById('sub-features-container');
+                subFeatContainer.innerHTML = '';
+                let subList = [];
+                if (Array.isArray(subFeatures)) subList = subFeatures;
+                else if (typeof subFeatures === 'string' && subFeatures.trim()) {
+                    subList = subFeatures.split(',').map(s => s.trim()).filter(Boolean);
+                }
+                if (subList.length > 0) {
+                    subList.forEach(feat => this.addFeatureRow('sub-features-container', feat));
+                } else {
+                    this.addFeatureRow('sub-features-container');
+                }
 
                 document.getElementById('view-list').classList.add('hidden');
                 document.getElementById('main-header').classList.add('hidden');
@@ -718,16 +943,22 @@
                 const mode = document.getElementById('form-mode').value;
                 const originalId = document.getElementById('form-original-id').value;
 
-                const mainFeaturesRaw = document.getElementById('input-main_features').value;
-                const mainFeaturesArray = mainFeaturesRaw ? mainFeaturesRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+                // Collect Main Features from dynamic inputs
+                const mainFeatureInputs = document.querySelectorAll('#main-features-container input[type="text"]');
+                const mainFeaturesArray = Array.from(mainFeatureInputs).map(input => input.value.trim()).filter(Boolean);
 
-                const subFeaturesRaw = document.getElementById('input-sub_features').value;
-                const subFeaturesArray = subFeaturesRaw ? subFeaturesRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+                // Collect Sub Features from dynamic inputs
+                const subFeatureInputs = document.querySelectorAll('#sub-features-container input[type="text"]');
+                const subFeaturesArray = Array.from(subFeatureInputs).map(input => input.value.trim()).filter(Boolean);
+
+                // Collect all additional image inputs
+                const additionalImageInputs = document.querySelectorAll('#additional-images-container input[type="url"]');
+                const additionalImagesArray = Array.from(additionalImageInputs).map(input => input.value.trim()).filter(Boolean);
 
                 const variantColorPayload = [{
                     color: document.getElementById('input-color').value || 'Default',
                     image_link: document.getElementById('input-image_link').value || '',
-                    additional_image_link: document.getElementById('input-additional_image_link').value || ''
+                    additional_image_link: additionalImagesArray
                 }];
 
                 const variantSizePayload = [{
@@ -742,9 +973,9 @@
                     description: document.getElementById('input-description').value,
                     availability: document.getElementById('input-availability').value,
                     condition: document.getElementById('input-condition').value,
-                    brand: document.getElementById('input-brand').value,
-                    link: document.getElementById('input-link').value,
-                    google_product_category: document.getElementById('input-google_product_category').value,
+                    brand: document.getElementById('input-brand').value || 'Apple',
+                    link: document.getElementById('input-link').value || '',
+                    google_product_category: document.getElementById('input-google_product_category').value || '',
                     product_type: document.getElementById('input-product_type').value,
                     quantity_to_sell_on_facebook: parseInt(document.getElementById('input-quantity_to_sell_on_facebook').value) || 0,
                     
@@ -759,8 +990,8 @@
                     variant_size: variantSizePayload,
                     main_features: mainFeaturesArray,
                     sub_features: subFeaturesArray,
-                    headline: document.getElementById('input-headline').value,
-                    band: document.getElementById('input-band').value
+                    headline: document.getElementById('input-headline').value || '',
+                    band: document.getElementById('input-band').value || ''
                 };
 
                 const submitBtn = document.getElementById('submit-btn');
@@ -779,9 +1010,7 @@
 
                     const response = await fetch(url, {
                         method: method,
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
 
@@ -828,14 +1057,10 @@
                     const url = `${API_BASE_URL}/${this.currentDeleteId}`;
                     const response = await fetch(url, {
                         method: 'DELETE',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
+                        headers: { 'Content-Type': 'application/json' }
                     });
 
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}`);
-                    }
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
                     this.showToast('Produk berhasil dihapus', 'success');
                     this.closeDeleteModal();
