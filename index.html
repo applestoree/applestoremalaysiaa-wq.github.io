@@ -4,860 +4,534 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Apple Produk Kelola Produk</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Inter & FontAwesome -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f3f4f6;
-            color: #111827;
+            margin: 0;
+            padding: 0;
         }
-        /* Mobile Frame Container Simulation */
+        /* Mobile container constraints per specification */
         .mobile-container {
             max-width: 500px;
             width: 100%;
-            height: 100vh;
-            height: 100dvh;
+            height: 100%;
             margin: 0 auto;
             display: flex;
             flex-direction: column;
             overflow: hidden;
             background-color: #ffffff;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
         }
         @media (min-width: 501px) {
             body {
                 display: flex;
-                align-items: center;
                 justify-content: center;
-                min-height: 100vh;
-                background-color: #e5e7eb;
+                align-items: center;
+                height: 100%;
             }
             .mobile-container {
                 height: 90vh;
-                border-radius: 2.5rem;
+                border-radius: 2rem;
                 border: 8px solid #1f2937;
             }
         }
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 5px;
-        }
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #d1d5db;
-            border-radius: 9999px;
-        }
     </style>
 </head>
-<body class="bg-gray-100">
+<body>
 
-    <div id="app" class="mobile-container relative">
-        
-        <!-- Toast Notification Component -->
-        <div id="toast" class="absolute top-4 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-300 opacity-0 pointer-events-none max-w-xs w-full px-4">
-            <div id="toast-content" class="flex items-center gap-3 p-3 rounded-xl shadow-lg border text-sm font-medium">
-                <i id="toast-icon" class="text-lg"></i>
-                <span id="toast-message" class="flex-1"></span>
+    <div id="app" class="mobile-container">
+        <!-- Header Section -->
+        <header class="bg-gray-900 text-white px-4 py-3 flex items-center justify-between shadow-md z-10">
+            <div class="flex items-center space-x-3">
+                <button id="back-btn" class="hidden text-gray-300 hover:text-white transition-colors p-2">
+                    <i class="fa-solid fa-arrow-left text-lg"></i>
+                </button>
+                <h1 id="app-title" class="text-lg font-semibold tracking-wide flex items-center gap-2">
+                    <i class="fa-brands fa-apple text-xl text-gray-100"></i> Apple Produk
+                </h1>
             </div>
-        </div>
-
-        <!-- Confirm Delete Modal Component -->
-        <div id="delete-modal" class="absolute inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 hidden">
-            <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl transform transition-all scale-95 opacity-0 duration-200" id="delete-modal-card">
-                <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-xl mb-4 mx-auto">
-                    <i class="fa-solid fa-triangle-exclamation"></i>
-                </div>
-                <h3 class="text-lg font-bold text-center text-gray-900 mb-2">Hapus Produk?</h3>
-                <p class="text-sm text-gray-500 text-center mb-6">Tindakan ini akan menghapus produk beserta varian dan labelnya secara permanen dari sistem.</p>
-                <div class="flex gap-3">
-                    <button onclick="closeDeleteModal()" class="flex-1 py-2.5 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl text-sm transition">Batal</button>
-                    <button id="confirm-delete-btn" class="flex-1 py-2.5 px-4 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl text-sm transition shadow-md shadow-red-200">Hapus</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Loading Overlay Component -->
-        <div id="loading-overlay" class="absolute inset-0 z-40 bg-white/80 backdrop-blur-xs flex flex-col items-center justify-center hidden">
-            <div class="w-10 h-10 border-4 border-black border-t-transparent rounded-full animate-spin mb-3"></div>
-            <p id="loading-text" class="text-xs font-semibold text-gray-600 tracking-wider uppercase">Memuat Data...</p>
-        </div>
-
-        <!-- App Header -->
-        <header class="bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between z-10 shrink-0">
-            <div class="flex items-center gap-2 cursor-pointer" onclick="navigateToList()">
-                <div class="w-9 h-9 rounded-xl bg-black text-white flex items-center justify-center font-bold shadow-sm">
-                    <i class="fa-brands fa-apple text-lg"></i>
-                </div>
-                <div>
-                    <h1 class="font-bold text-gray-900 text-sm leading-tight">Apple Produk</h1>
-                    <p class="text-[10px] text-gray-400 font-medium tracking-wide">Kelola Katalog Produk</p>
-                </div>
-            </div>
-            <div id="header-actions" class="flex items-center gap-2">
-                <button onclick="openCreatePage()" class="bg-black hover:bg-gray-800 text-white px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-sm transition active:scale-95">
-                    <i class="fa-solid fa-plus text-[10px]"></i>
-                    <span>Tambah</span>
+            <div id="header-actions" class="flex items-center space-x-2">
+                <button id="add-product-btn" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1.5 rounded-xl font-medium shadow transition-all flex items-center gap-1.5">
+                    <i class="fa-solid fa-plus"></i> Baru
                 </button>
             </div>
         </header>
 
         <!-- Main Content Area -->
-        <main class="flex-1 overflow-y-auto min-h-0 relative flex flex-col bg-gray-50/50">
-
-            <!-- 1. PRODUCT LIST PAGE -->
-            <div id="page-list" class="flex-1 flex flex-col p-4 space-y-4">
-                
-                <!-- Search & Filters -->
-                <div class="space-y-2.5">
-                    <div class="relative">
-                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
-                        <input type="text" id="search-input" oninput="handleSearch(this.value)" placeholder="Cari nama produk, brand, atau kategori..." class="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black transition">
-                    </div>
-                    <div class="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-                        <select id="filter-type" onchange="handleFilterChange()" class="bg-white border border-gray-200 text-gray-700 text-xs rounded-xl px-3 py-2 font-medium focus:outline-none focus:ring-1 focus:ring-black">
-                            <option value="">Semua Product Type</option>
-                        </select>
-                        <select id="filter-availability" onchange="handleFilterChange()" class="bg-white border border-gray-200 text-gray-700 text-xs rounded-xl px-3 py-2 font-medium focus:outline-none focus:ring-1 focus:ring-black">
-                            <option value="">Semua Ketersediaan</option>
-                            <option value="in stock">In Stock</option>
-                            <option value="out of stock">Out of Stock</option>
-                            <option value="preorder">Preorder</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Product Count & Summary -->
-                <div class="flex justify-between items-center px-1">
-                    <span id="product-count" class="text-xs font-semibold text-gray-500">Menampilkan 0 produk</span>
-                    <button onclick="fetchProducts()" class="text-xs text-black font-semibold hover:underline flex items-center gap-1">
-                        <i class="fa-solid fa-rotate-right text-[10px]"></i> Segarkan
-                    </button>
-                </div>
-
-                <!-- Product List Container -->
-                <div id="product-list-container" class="space-y-3 pb-6">
-                    <!-- Dynamic Product Cards will be injected here -->
-                </div>
-
-                <!-- Empty State Component -->
-                <div id="empty-state" class="hidden flex-1 flex flex-col items-center justify-center p-8 text-center my-auto">
-                    <div class="w-16 h-16 bg-gray-100 text-gray-400 rounded-full flex items-center justify-center text-2xl mb-3 shadow-inner">
-                        <i class="fa-solid fa-box-open"></i>
-                    </div>
-                    <h3 class="font-bold text-gray-800 text-base mb-1">Tidak Ada Produk</h3>
-                    <p class="text-xs text-gray-500 max-w-xs mb-4">Belum ada produk yang tersimpan atau hasil pencarian tidak ditemukan.</p>
-                    <button onclick="openCreatePage()" class="px-4 py-2 bg-black text-white text-xs font-semibold rounded-xl shadow-md">Tambah Produk Baru</button>
-                </div>
-
-            </div>
-
-            <!-- 2. PRODUCT FORM PAGE (CREATE / EDIT) -->
-            <div id="page-form" class="absolute inset-0 bg-white flex flex-col z-20 translate-x-full transition-transform duration-300 ease-in-out">
-                
-                <!-- Form Header -->
-                <div class="border-b border-gray-100 px-4 py-3 flex items-center justify-between bg-white shrink-0">
-                    <div class="flex items-center gap-3">
-                        <button onclick="navigateToList()" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center transition">
-                            <i class="fa-solid fa-arrow-left text-sm"></i>
-                        </button>
-                        <h2 id="form-title" class="font-bold text-gray-900 text-sm">Tambah Produk Baru</h2>
-                    </div>
-                </div>
-
-                <!-- Form Scrollable Content -->
-                <div class="flex-1 overflow-y-auto p-4 space-y-6">
-                    <form id="product-form" onsubmit="handleFormSubmit(event)" class="space-y-6 pb-20">
-                        <input type="hidden" id="form-mode" value="create">
-                        
-                        <!-- Section 1: Informasi Dasar -->
-                        <div class="bg-gray-50/70 p-4 rounded-2xl border border-gray-100 space-y-4">
-                            <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400">Informasi Dasar</h3>
-                            
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-700 mb-1">Item Group ID <span class="text-red-500">*</span></label>
-                                <input type="text" id="input-item_group_id" required placeholder="Contoh: IPHONE-15-PRO" class="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/20">
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-700 mb-1">Judul Produk (Title) <span class="text-red-500">*</span></label>
-                                <input type="text" id="input-title" required placeholder="Contoh: Apple iPhone 15 Pro Max 256GB" class="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/20">
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-700 mb-1">Brand</label>
-                                    <input type="text" id="input-brand" value="Apple" placeholder="Apple" class="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/20">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-700 mb-1">Kondisi</label>
-                                    <select id="input-condition" class="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/20">
-                                        <option value="new">New</option>
-                                        <option value="refurbished">Refurbished</option>
-                                        <option value="used">Used</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-700 mb-1">Ketersediaan (Availability)</label>
-                                    <select id="input-availability" class="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/20">
-                                        <option value="in stock">In Stock</option>
-                                        <option value="out of stock">Out of Stock</option>
-                                        <option value="preorder">Preorder</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-700 mb-1">Stok FB</label>
-                                    <input type="number" id="input-quantity_to_sell_on_facebook" value="10" class="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/20">
-                                </div>
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-700 mb-1">Product Type</label>
-                                    <input type="text" id="input-product_type" placeholder="Smartphones" class="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/20">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-700 mb-1">Google Category ID</label>
-                                    <input type="text" id="input-google_product_category" placeholder="267" class="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/20">
-                                </div>
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-700 mb-1">Link Produk Official</label>
-                                <input type="url" id="input-link" placeholder="https://www.apple.com/id/iphone-15-pro/" class="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/20">
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-700 mb-1">Deskripsi Produk</label>
-                                <textarea id="input-description" rows="3" placeholder="Deskripsikan fitur unggulan produk Apple..." class="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/20"></textarea>
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-700 mb-1">Headline Promosi</label>
-                                    <input type="text" id="input-headline" placeholder="Titanium Design" class="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/20">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-700 mb-1">Band / Seri</label>
-                                    <input type="text" id="input-band" placeholder="A17 Pro" class="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/20">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Section 2: Varian Warna & Gambar -->
-                        <div class="bg-gray-50/70 p-4 rounded-2xl border border-gray-100 space-y-4">
-                            <div class="flex justify-between items-center">
-                                <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400">Varian Warna & Gambar</h3>
-                                <button type="button" onclick="addVariantColorItem()" class="text-xs text-black font-semibold hover:bg-gray-200 bg-gray-200/60 px-2.5 py-1 rounded-lg transition">
-                                    <i class="fa-solid fa-plus text-[10px]"></i> Tambah Warna
-                                </button>
-                            </div>
-                            <div id="variant-color-container" class="space-y-3">
-                                <!-- Dynamic Color Items inserted here -->
-                            </div>
-                        </div>
-
-                        <!-- Section 3: Varian Ukuran & Harga -->
-                        <div class="bg-gray-50/70 p-4 rounded-2xl border border-gray-100 space-y-4">
-                            <div class="flex justify-between items-center">
-                                <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400">Varian Ukuran & Harga</h3>
-                                <button type="button" onclick="addVariantSizeItem()" class="text-xs text-black font-semibold hover:bg-gray-200 bg-gray-200/60 px-2.5 py-1 rounded-lg transition">
-                                    <i class="fa-solid fa-plus text-[10px]"></i> Tambah Ukuran
-                                </button>
-                            </div>
-                            <div id="variant-size-container" class="space-y-3">
-                                <!-- Dynamic Size Items inserted here -->
-                            </div>
-                        </div>
-
-                        <!-- Section 4: Fitur Utama & Sub Fitur -->
-                        <div class="bg-gray-50/70 p-4 rounded-2xl border border-gray-100 space-y-4">
-                            <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400">Fitur & Spesifikasi</h3>
-                            
-                            <div>
-                                <div class="flex justify-between items-center mb-1">
-                                    <label class="block text-xs font-semibold text-gray-700">Main Features (Pisahkan dengan baris baru)</label>
-                                </div>
-                                <textarea id="input-main_features" rows="3" placeholder="Chip A17 Pro dengan GPU 6-core&#10;Sistem kamera pro paling canggih" class="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/20 font-mono text-xs"></textarea>
-                            </div>
-
-                            <div>
-                                <div class="flex justify-between items-center mb-1">
-                                    <label class="block text-xs font-semibold text-gray-700">Sub Features (Pisahkan dengan baris baru)</label>
-                                </div>
-                                <textarea id="input-sub_features" rows="3" placeholder="Layar Super Retina XDR&#10;ProMotion 120Hz" class="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/20 font-mono text-xs"></textarea>
-                            </div>
-                        </div>
-
-                        <!-- Section 5: Custom Labels -->
-                        <div class="bg-gray-50/70 p-4 rounded-2xl border border-gray-100 space-y-4">
-                            <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400">Custom Labels (0 - 5)</h3>
-                            <div class="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label class="block text-[10px] font-semibold text-gray-500 mb-1">Custom Label 0</label>
-                                    <input type="text" id="input-custom_label_0" placeholder="Flagship" class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs focus:outline-none">
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-semibold text-gray-500 mb-1">Custom Label 1</label>
-                                    <input type="text" id="input-custom_label_1" placeholder="Best Seller" class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs focus:outline-none">
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-semibold text-gray-500 mb-1">Custom Label 2</label>
-                                    <input type="text" id="input-custom_label_2" placeholder="Garansi Resmi" class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs focus:outline-none">
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-semibold text-gray-500 mb-1">Custom Label 3</label>
-                                    <input type="text" id="input-custom_label_3" placeholder="Free Adapter" class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs focus:outline-none">
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-semibold text-gray-500 mb-1">Custom Label 4</label>
-                                    <input type="text" id="input-custom_label_4" placeholder="Ready Stock" class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs focus:outline-none">
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-semibold text-gray-500 mb-1">Custom Label 5</label>
-                                    <input type="text" id="input-custom_label_5" placeholder="Promo Spesial" class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs focus:outline-none">
-                                </div>
-                            </div>
-                        </div>
-
-                    </form>
-                </div>
-
-                <!-- Bottom Sticky Action Bar -->
-                <div class="border-t border-gray-100 p-4 bg-white flex gap-3 shrink-0 shadow-lg">
-                    <button type="button" onclick="navigateToList()" class="flex-1 py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl text-sm transition">Batal</button>
-                    <button type="submit" form="product-form" id="submit-btn" class="flex-1 py-3 px-4 bg-black hover:bg-gray-800 text-white font-semibold rounded-xl text-sm transition shadow-md shadow-black/20 flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-floppy-disk"></i> Simpan Produk
-                    </button>
-                </div>
-
-            </div>
-
+        <main class="flex-1 overflow-y-auto relative bg-gray-50 flex flex-col" id="main-content">
+            <!-- Dynamic views injected here -->
         </main>
 
+        <!-- Toast Notification Container -->
+        <div id="toast-container" class="absolute bottom-4 left-4 right-4 z-50 pointer-events-none flex flex-col gap-2 items-center"></div>
+
+        <!-- Delete Confirmation Modal -->
+        <div id="delete-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl transform transition-all">
+                <div class="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-xl mb-4 mx-auto">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 text-center mb-1">Hapus Produk?</h3>
+                <p class="text-sm text-gray-500 text-center mb-6">Tindakan ini tidak dapat dibatalkan dari sistem.</p>
+                <div class="flex space-x-3">
+                    <button id="cancel-delete" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 rounded-xl transition-colors">Batal</button>
+                    <button id="confirm-delete" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-2.5 rounded-xl transition-colors shadow-lg shadow-red-600/30">Hapus</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        // API Base URL specification
-        const API_BASE_URL = 'https://jhpbtooefyzdndstlzva.supabase.co/functions/v1/apple-produk-kelola-produk';
+        // API & App configuration based on spec v9
+        const API_BASE = "https://jhpbtooefyzdndstlzva.supabase.co/functions/v1/apple-produk-kelola-produk";
+        
+        let state = {
+            view: 'list', // 'list' or 'form'
+            formMode: 'create', // 'create' or 'edit'
+            products: [],
+            loading: false,
+            searchQuery: '',
+            selectedProductType: '',
+            selectedAvailability: '',
+            currentProduct: null,
+            deleteTargetId: null
+        };
 
-        // State Management
-        let products = [];
-        let currentEditingId = null;
-        let itemToDeleteId = null;
+        // DOM Elements
+        const mainContent = document.getElementById('main-content');
+        const backBtn = document.getElementById('back-btn');
+        const addProductBtn = document.getElementById('add-product-btn');
+        const appTitle = document.getElementById('app-title');
+        const toastContainer = document.getElementById('toast-container');
+        const deleteModal = document.getElementById('delete-modal');
+        const cancelDeleteBtn = document.getElementById('cancel-delete');
+        const confirmDeleteBtn = document.getElementById('confirm-delete');
 
-        // Initialize App on Load
-        window.addEventListener('DOMContentLoaded', () => {
-            fetchProducts();
-        });
-
-        // Toast Notification System
         function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast');
-            const toastContent = document.getElementById('toast-content');
-            const toastIcon = document.getElementById('toast-icon');
-            const toastMessage = document.getElementById('toast-message');
-
-            toastMessage.textContent = message;
+            const toast = document.createElement('div');
+            const bgClass = type === 'success' ? 'bg-gray-900 text-white' : 'bg-red-600 text-white';
+            const icon = type === 'success' ? 'fa-circle-check text-emerald-400' : 'fa-circle-exclamation text-white';
             
-            if (type === 'success') {
-                toastContent.className = 'flex items-center gap-3 p-3 rounded-xl shadow-xl border bg-gray-900 text-white border-gray-800 text-sm font-medium';
-                toastIcon.className = 'fa-solid fa-circle-check text-emerald-400 text-lg';
-            } else {
-                toastContent.className = 'flex items-center gap-3 p-3 rounded-xl shadow-xl border bg-red-50 text-red-800 border-red-200 text-sm font-medium';
-                toastIcon.className = 'fa-solid fa-circle-exclamation text-red-600 text-lg';
-            }
-
-            toast.classList.remove('opacity-0', 'pointer-events-none');
-            toast.classList.add('opacity-100');
+            toast.className = `${bgClass} px-4 py-3 rounded-2xl shadow-xl text-sm font-medium flex items-center gap-3 transform translate-y-4 opacity-0 transition-all duration-300 pointer-events-auto`;
+            toast.innerHTML = `<i class="fa-solid ${icon} text-base"></i><span>${message}</span>`;
+            
+            toastContainer.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.remove('translate-y-4', 'opacity-0');
+            }, 10);
 
             setTimeout(() => {
-                toast.classList.remove('opacity-100');
-                toast.classList.add('opacity-0', 'pointer-events-none');
+                toast.classList.add('translate-y-4', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
             }, 3500);
         }
 
-        // Loading Indicator
-        function setLoading(isLoading, text = 'Memuat Data...') {
-            const loader = document.getElementById('loading-overlay');
-            const loaderText = document.getElementById('loading-text');
-            loaderText.textContent = text;
-            if (isLoading) {
-                loader.classList.remove('hidden');
-            } else {
-                loader.classList.add('hidden');
-            }
-        }
-
-        // Navigation Functions
-        function navigateToList() {
-            const pageForm = document.getElementById('page-form');
-            pageForm.classList.add('translate-x-full');
-            currentEditingId = null;
-        }
-
-        function openCreatePage() {
-            document.getElementById('form-mode').value = 'create';
-            document.getElementById('form-title').textContent = 'Tambah Produk Baru';
-            document.getElementById('product-form').reset();
-            
-            // Set default default variant fields
-            document.getElementById('variant-color-container').innerHTML = '';
-            document.getElementById('variant-size-container').innerHTML = '';
-            addVariantColorItem('Space Black', 'https://placehold.co/400x400/111827/ffffff?text=iPhone+Space+Black', '');
-            addVariantSizeItem('256GB', 19999000, 18999000);
-
-            const pageForm = document.getElementById('page-form');
-            pageForm.classList.remove('translate-x-full');
-        }
-
-        function openEditPage(itemGroupId) {
-            const product = products.find(p => p.ItemGroupId === itemGroupId || p.item_group_id === itemGroupId);
-            if (!product) {
-                showToast('Produk tidak ditemukan', 'error');
-                return;
-            }
-
-            document.getElementById('form-mode').value = 'edit';
-            document.getElementById('form-title').textContent = 'Edit Produk: ' + (product.Title || product.title);
-            
-            // Populate Fields mapping
-            document.getElementById('input-item_group_id').value = product.ItemGroupId || product.item_group_id || '';
-            document.getElementById('input-item_group_id').disabled = true; // Primary key identifier
-            document.getElementById('input-title').value = product.Title || product.title || '';
-            document.getElementById('input-description').value = product.Description || product.description || '';
-            document.getElementById('input-availability').value = product.Availability || product.availability || 'in stock';
-            document.getElementById('input-condition').value = product.Condition || product.condition || 'new';
-            document.getElementById('input-brand').value = product.Brand || product.brand || 'Apple';
-            document.getElementById('input-link').value = product.Link || product.link || '';
-            document.getElementById('input-google_product_category').value = product.GoogleProductCategory || product.google_product_category || '';
-            document.getElementById('input-product_type').value = product.ProductType || product.product_type || '';
-            document.getElementById('input-quantity_to_sell_on_facebook').value = product.QuantityToSellOnFacebook || product.quantity_to_sell_on_facebook || 10;
-            
-            document.getElementById('input-headline').value = product.Headline || product.headline || '';
-            document.getElementById('input-band').value = product.Band || product.band || '';
-
-            // Custom labels
-            for (let i = 0; i <= 5; i++) {
-                const fieldNamePascal = `CustomLabel${i}`;
-                const fieldNameSnake = `custom_label_${i}`;
-                const val = product[fieldNamePascal] || product[fieldNameSnake] || '';
-                const el = document.getElementById(`input-${fieldNameSnake}`);
-                if (el) el.value = val;
-            }
-
-            // Features Arrays
-            const mainFeats = product.MainFeatures || product.main_features || [];
-            document.getElementById('input-main_features').value = Array.isArray(mainFeats) ? mainFeats.join('\n') : mainFeats;
-
-            const subFeats = product.SubFeatures || product.sub_features || [];
-            document.getElementById('input-sub_features').value = Array.isArray(subFeats) ? subFeats.join('\n') : subFeats;
-
-            // Variants Color
-            const colors = product.VariantColor || product.variant_color || [];
-            const colorContainer = document.getElementById('variant-color-container');
-            colorContainer.innerHTML = '';
-            if (colors.length > 0) {
-                colors.forEach(c => addVariantColorItem(c.color || c.Color || '', c.image_link || c.ImageLink || '', c.additional_image_link || c.AdditionalImageLink || ''));
-            } else {
-                addVariantColorItem();
-            }
-
-            // Variants Size
-            const sizes = product.VariantSize || product.variant_size || [];
-            const sizeContainer = document.getElementById('variant-size-container');
-            sizeContainer.innerHTML = '';
-            if (sizes.length > 0) {
-                sizes.forEach(s => addVariantSizeItem(s.size || s.Size || '', s.price || s.Price || 0, s.sale_price || s.SalePrice || 0));
-            } else {
-                addVariantSizeItem();
-            }
-
-            currentEditingId = product.ItemGroupId || product.item_group_id;
-            const pageForm = document.getElementById('page-form');
-            pageForm.classList.remove('translate-x-full');
-        }
-
-        // Dynamic Variant Add/Remove Helpers
-        function addVariantColorItem(color = '', img = '', addImg = '') {
-            const container = document.getElementById('variant-color-container');
-            const div = document.createElement('div');
-            div.className = 'p-3 bg-white rounded-xl border border-gray-200 relative space-y-2.5 variant-color-row';
-            div.innerHTML = `
-                <div class="flex justify-between items-center">
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Varian Warna</span>
-                    <button type="button" onclick="this.closest('.variant-color-row').remove()" class="text-red-500 hover:text-red-700 text-xs"><i class="fa-solid fa-trash"></i></button>
-                </div>
-                <div class="grid grid-cols-1 gap-2">
-                    <input type="text" placeholder="Nama Warna (Contoh: Natural Titanium)" value="${color}" class="color-val w-full px-3 py-2 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-black">
-                    <input type="url" placeholder="URL Gambar Utama" value="${img}" class="img-val w-full px-3 py-2 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-black">
-                    <input type="url" placeholder="URL Gambar Tambahan (Opsional)" value="${addImg}" class="add-img-val w-full px-3 py-2 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-black">
-                </div>
-            `;
-            container.appendChild(div);
-        }
-
-        function addVariantSizeItem(size = '', price = 0, salePrice = 0) {
-            const container = document.getElementById('variant-size-container');
-            const div = document.createElement('div');
-            div.className = 'p-3 bg-white rounded-xl border border-gray-200 relative space-y-2.5 variant-size-row';
-            div.innerHTML = `
-                <div class="flex justify-between items-center">
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Varian Ukuran / Kapasitas</span>
-                    <button type="button" onclick="this.closest('.variant-size-row').remove()" class="text-red-500 hover:text-red-700 text-xs"><i class="fa-solid fa-trash"></i></button>
-                </div>
-                <div class="grid grid-cols-3 gap-2">
-                    <input type="text" placeholder="Ukuran (512GB)" value="${size}" class="size-val px-3 py-2 border border-gray-200 rounded-lg text-xs focus:outline-none">
-                    <input type="number" placeholder="Harga (IDR)" value="${price}" class="price-val px-3 py-2 border border-gray-200 rounded-lg text-xs focus:outline-none">
-                    <input type="number" placeholder="Harga Diskon" value="${salePrice}" class="saleprice-val px-3 py-2 border border-gray-200 rounded-lg text-xs focus:outline-none">
-                </div>
-            `;
-            container.appendChild(div);
-        }
-
-        // API Integration: FETCH LIST
         async function fetchProducts() {
-            setLoading(true, 'Memuat Daftar Produk...');
+            state.loading = true;
+            render();
             try {
-                const response = await fetch(API_BASE_URL, {
-                    method: 'GET',
-                    headers: { 'Accept': 'application/json' }
-                });
+                let url = API_BASE;
+                const params = new URLSearchParams();
+                if (state.searchQuery) params.append('search', state.searchQuery);
+                if (state.selectedProductType) params.append('product_type', state.selectedProductType);
+                if (state.selectedAvailability) params.append('availability', state.selectedAvailability);
                 
-                if (!response.ok) throw new Error('Gagal mengambil data dari server.');
-                
-                const result = await response.json();
-                // Handle different array response formats from Supabase edge function
-                products = Array.isArray(result) ? result : (result.data || result.products || []);
-                
-                populateFilterTypes();
-                renderProductList(products);
-            } catch (error) {
-                console.error('Fetch error:', error);
-                // Fallback mock demo data if edge function isn't reachable yet
-                products = getMockProducts();
-                populateFilterTypes();
-                renderProductList(products);
-                showToast('Menggunakan data offline tersimpan', 'error');
+                if (params.toString()) url += `?${params.toString()}`;
+
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Gagal mengambil data produk');
+                const data = await response.json();
+                state.products = Array.isArray(data) ? data : (data.data || []);
+            } catch (err) {
+                console.error(err);
+                showToast('Gagal memuat daftar produk', 'error');
+                state.products = [];
             } finally {
-                setLoading(false);
+                state.loading = false;
+                render();
             }
         }
 
-        // Mock fallback data for instant preview usability
-        function getMockProducts() {
-            return [
-                {
-                    ItemGroupId: "IPHONE-15-PRO",
-                    Title: "Apple iPhone 15 Pro Max",
-                    ProductType: "Smartphones",
-                    Availability: "in stock",
-                    Description: "Ditenagai chip A17 Pro yang revolusioner dengan desain titanium kelas dirgantara.",
-                    Brand: "Apple",
-                    Condition: "new",
-                    QuantityToSellOnFacebook: 15,
-                    variant_color: [{ color: "Natural Titanium", image_link: "https://placehold.co/400x400/374151/ffffff?text=iPhone+15+Pro" }],
-                    variant_size: [{ size: "256GB", price: 21999000, sale_price: 20999000 }]
-                },
-                {
-                    ItemGroupId: "MACBOOK-PRO-M3",
-                    Title: "Apple MacBook Pro 16 M3 Max",
-                    ProductType: "Laptops",
-                    Availability: "in stock",
-                    Description: "Laptop pro paling canggih dengan performa luar biasa berkat chip M3 Max.",
-                    Brand: "Apple",
-                    Condition: "new",
-                    QuantityToSellOnFacebook: 8,
-                    variant_color: [{ color: "Space Black", image_link: "https://placehold.co/400x400/1f2937/ffffff?text=MacBook+Pro+M3" }],
-                    variant_size: [{ size: "1TB SSD", price: 42999000, sale_price: 41500000 }]
-                }
-            ];
-        }
-
-        // Render Product List to DOM
-        function renderProductList(dataList) {
-            const container = document.getElementById('product-list-container');
-            const emptyState = document.getElementById('empty-state');
-            const countLabel = document.getElementById('product-count');
-
-            countLabel.textContent = `Menampilkan ${dataList.length} produk`;
-
-            if (dataList.length === 0) {
-                container.innerHTML = '';
-                emptyState.classList.remove('hidden');
-                return;
-            }
-
-            emptyState.classList.add('hidden');
-            container.innerHTML = '';
-
-            dataList.forEach(prod => {
-                const id = prod.ItemGroupId || prod.item_group_id || '';
-                const title = prod.Title || prod.title || 'Tanpa Judul';
-                const type = prod.ProductType || prod.product_type || 'Apple Product';
-                const availability = prod.Availability || prod.availability || 'in stock';
-                
-                // Extract image from variant_color[0]
-                const colors = prod.VariantColor || prod.variant_color || [];
-                let imgLink = 'https://placehold.co/400x400/000000/ffffff?text=Apple+Product';
-                if (colors.length > 0 && (colors[0].image_link || colors[0].ImageLink)) {
-                    imgLink = colors[0].image_link || colors[0].ImageLink;
-                }
-
-                // Extract starting price from variant_size[0]
-                const sizes = prod.VariantSize || prod.variant_size || [];
-                let priceFormatted = 'Harga tidak tersedia';
-                if (sizes.length > 0) {
-                    const priceVal = sizes[0].price || sizes[0].Price || 0;
-                    priceFormatted = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(priceVal);
-                }
-
-                // Availability badge color styling
-                let badgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
-                if (availability === 'out of stock') badgeClass = 'bg-red-50 text-red-700 border-red-200';
-                if (availability === 'preorder') badgeClass = 'bg-amber-50 text-amber-700 border-amber-200';
-
-                const card = document.createElement('div');
-                card.className = 'bg-white p-3.5 rounded-2xl border border-gray-100 shadow-xs flex items-center gap-3.5 transition hover:shadow-md';
-                card.innerHTML = `
-                    <div class="w-16 h-16 rounded-xl bg-gray-100 overflow-hidden shrink-0 border border-gray-100 flex items-center justify-center relative">
-                        <img src="${imgLink}" alt="${title}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/400x400/000000/ffffff?text=Apple'">
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-2 mb-0.5">
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400 truncate">${type}</span>
-                            <span class="text-[10px] px-2 py-0.5 rounded-full font-medium border ${badgeClass} capitalize">${availability}</span>
-                        </div>
-                        <h4 class="font-semibold text-gray-900 text-sm truncate mb-1">${title}</h4>
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-bold text-black">${priceFormatted}</span>
-                            <div class="flex items-center gap-1.5">
-                                <button onclick="openEditPage('${id}')" class="w-7 h-7 rounded-lg bg-gray-100 hover:bg-black hover:text-white text-gray-600 flex items-center justify-center text-xs transition" title="Edit">
-                                    <i class="fa-solid fa-pen"></i>
-                                </button>
-                                <button onclick="promptDelete('${id}')" class="w-7 h-7 rounded-lg bg-red-50 hover:bg-red-600 hover:text-white text-red-600 flex items-center justify-center text-xs transition" title="Hapus">
-                                    <i class="fa-solid fa-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        // Filter Type Options Dropdown generator
-        function populateFilterTypes() {
-            const filterSelect = document.getElementById('filter-type');
-            const types = [...new Set(products.map(p => p.ProductType || p.product_type).filter(Boolean))];
-            
-            // Keep first option
-            filterSelect.innerHTML = '<option value="">Semua Product Type</option>';
-            types.forEach(t => {
-                const opt = document.createElement('option');
-                opt.value = t;
-                opt.textContent = t;
-                filterSelect.appendChild(opt);
-            });
-        }
-
-        // Search and Filter Handler
-        function handleSearch() {
-            applyFilters();
-        }
-
-        function handleFilterChange() {
-            applyFilters();
-        }
-
-        function applyFilters() {
-            const query = document.getElementById('search-input').value.toLowerCase();
-            const selectedType = document.getElementById('filter-type').value;
-            const selectedAvailability = document.getElementById('filter-availability').value;
-
-            const filtered = products.filter(prod => {
-                const title = (prod.Title || prod.title || '').toLowerCase();
-                const brand = (prod.Brand || prod.brand || '').toLowerCase();
-                const type = prod.ProductType || prod.product_type || '';
-                const avail = prod.Availability || prod.availability || '';
-
-                const matchesQuery = title.includes(query) || brand.includes(query);
-                const matchesType = !selectedType || type === selectedType;
-                const matchesAvail = !selectedAvailability || avail === selectedAvailability;
-
-                return matchesQuery && matchesType && matchesAvail;
-            });
-
-            renderProductList(filtered);
-        }
-
-        // Form Submit Handler (CREATE & UPDATE via POST / PUT)
-        async function handleFormSubmit(event) {
-            event.preventDefault();
-            
-            const mode = document.getElementById('form-mode').value;
-            const itemGroupId = document.getElementById('input-item_group_id').value.trim();
-
-            // Collect variant color data
-            const colorRows = document.querySelectorAll('.variant-color-row');
-            const variantColor = [];
-            colorRows.forEach(row => {
-                const color = row.querySelector('.color-val').value.trim();
-                const image_link = row.querySelector('.img-val').value.trim();
-                const additional_image_link = row.querySelector('.add-img-val').value.trim();
-                if (color) {
-                    variantColor.push({ color, image_link, additional_image_link });
-                }
-            });
-
-            // Collect variant size data
-            const sizeRows = document.querySelectorAll('.variant-size-row');
-            const variantSize = [];
-            sizeRows.forEach(row => {
-                const size = row.querySelector('.size-val').value.trim();
-                const price = parseFloat(row.querySelector('.price-val').value) || 0;
-                const sale_price = parseFloat(row.querySelector('.saleprice-val').value) || 0;
-                if (size) {
-                    variantSize.push({ size, price, sale_price });
-                }
-            });
-
-            // Collect features
-            const mainFeaturesText = document.getElementById('input-main_features').value;
-            const main_features = mainFeaturesText ? mainFeaturesText.split('\n').filter(Boolean) : [];
-
-            const subFeaturesText = document.getElementById('input-sub_features').value;
-            const sub_features = subFeaturesText ? subFeaturesText.split('\n').filter(Boolean) : [];
-
-            // Construct payload object matching data mapping
-            const payload = {
-                ItemGroupId: itemGroupId,
-                Title: document.getElementById('input-title').value.trim(),
-                Description: document.getElementById('input-description').value.trim(),
-                Availability: document.getElementById('input-availability').value,
-                Condition: document.getElementById('input-condition').value,
-                Brand: document.getElementById('input-brand').value.trim(),
-                Link: document.getElementById('input-link').value.trim(),
-                GoogleProductCategory: document.getElementById('input-google_product_category').value.trim(),
-                ProductType: document.getElementById('input-product_type').value.trim(),
-                QuantityToSellOnFacebook: parseInt(document.getElementById('input-quantity_to_sell_on_facebook').value) || 10,
-                CustomLabel0: document.getElementById('input-custom_label_0').value.trim(),
-                CustomLabel1: document.getElementById('input-custom_label_1').value.trim(),
-                CustomLabel2: document.getElementById('input-custom_label_2').value.trim(),
-                CustomLabel3: document.getElementById('input-custom_label_3').value.trim(),
-                CustomLabel4: document.getElementById('input-custom_label_4').value.trim(),
-                CustomLabel5: document.getElementById('input-custom_label_5').value.trim(),
-                VariantColor: variantColor,
-                VariantSize: variantSize,
-                MainFeatures: main_features,
-                SubFeatures: sub_features,
-                Headline: document.getElementById('input-headline').value.trim(),
-                Band: document.getElementById('input-band').value.trim()
-            };
-
-            const isEdit = mode === 'edit';
-            const url = isEdit ? `${API_BASE_URL}/${itemGroupId}` : API_BASE_URL;
-            const method = isEdit ? 'PUT' : 'POST';
-
-            setLoading(true, isEdit ? 'Menyimpan Perubahan...' : 'Menambahkan Produk...');
-
+        async function saveProduct(payload, isEdit, itemGroupId) {
             try {
+                const url = isEdit ? `${API_BASE}/${itemGroupId}` : API_BASE;
+                const method = isEdit ? 'PUT' : 'POST';
+                
                 const response = await fetch(url, {
                     method: method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
 
                 if (!response.ok) {
-                    const errData = await response.json().catch(() => ({}));
-                    throw new Error(errData.message || 'Gagal menyimpan produk ke server.');
+                    const errRes = await response.json().catch(() => ({}));
+                    throw new Error(errRes.message || 'Gagal menyimpan produk');
                 }
 
                 showToast(isEdit ? 'Produk berhasil diperbarui!' : 'Produk baru berhasil ditambahkan!');
-                navigateToList();
+                state.view = 'list';
                 fetchProducts();
-            } catch (error) {
-                console.error('Submit error:', error);
-                showToast(error.message || 'Terjadi kesalahan saat menyimpan.', 'error');
-                
-                // Optimistic local state fallback for preview environment demo
-                if (!isEdit) {
-                    products.unshift(payload);
-                } else {
-                    const idx = products.findIndex(p => (p.ItemGroupId || p.item_group_id) === itemGroupId);
-                    if (idx !== -1) products[idx] = payload;
-                }
-                renderProductList(products);
-                navigateToList();
-            } finally {
-                setLoading(false);
+            } catch (err) {
+                console.error(err);
+                showToast(err.message, 'error');
             }
         }
 
-        // Delete confirmation modals
-        function promptDelete(itemGroupId) {
-            itemToDeleteId = itemGroupId;
-            const modal = document.getElementById('delete-modal');
-            const card = document.getElementById('delete-modal-card');
-            modal.classList.remove('hidden');
-            setTimeout(() => {
-                card.classList.remove('scale-95', 'opacity-0');
-                card.classList.add('scale-100', 'opacity-100');
-            }, 10);
-
-            // Bind confirm button action
-            document.getElementById('confirm-delete-btn').onclick = executeDelete;
-        }
-
-        function closeDeleteModal() {
-            const modal = document.getElementById('delete-modal');
-            const card = document.getElementById('delete-modal-card');
-            card.classList.remove('scale-100', 'opacity-100');
-            card.classList.add('scale-95', 'opacity-0');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-                itemToDeleteId = null;
-            }, 200);
-        }
-
-        async function executeDelete() {
-            if (!itemToDeleteId) return;
-            
-            const targetId = itemToDeleteId;
-            closeDeleteModal();
-            setLoading(true, 'Menghapus Produk...');
-
+        async function deleteProductApi(itemGroupId) {
             try {
-                const response = await fetch(`${API_BASE_URL}/${targetId}`, {
-                    method: 'DELETE',
-                    headers: { 'Accept': 'application/json' }
+                const response = await fetch(`${API_BASE}/${itemGroupId}`, {
+                    method: 'DELETE'
                 });
-
-                if (!response.ok) throw new Error('Gagal menghapus produk.');
-
+                if (!response.ok) throw new Error('Gagal menghapus produk');
+                
                 showToast('Produk berhasil dihapus');
                 fetchProducts();
-            } catch (error) {
-                console.error('Delete error:', error);
-                // Optimistic local removal fallback
-                products = products.filter(p => (p.ItemGroupId || p.item_group_id) !== targetId);
-                renderProductList(products);
-                showToast('Produk berhasil dihapus (Lokal)', 'success');
-            } finally {
-                setLoading(false);
+            } catch (err) {
+                console.error(err);
+                showToast('Gagal menghapus produk', 'error');
             }
         }
+
+        function renderProductListPage() {
+            appTitle.innerHTML = `<i class="fa-brands fa-apple text-xl text-gray-100"></i> Apple Produk`;
+            backBtn.classList.add('hidden');
+            addProductBtn.classList.remove('hidden');
+
+            const productTypes = [...new Set(state.products.map(p => p.product_type).filter(Boolean))];
+
+            mainContent.innerHTML = `
+                <div class="p-4 space-y-4">
+                    <!-- Search & Filters -->
+                    <div class="space-y-2">
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </span>
+                            <input type="text" id="search-input" value="${state.searchQuery}" placeholder="Cari produk Apple..." 
+                                class="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm transition-all">
+                        </div>
+                        <div class="flex gap-2">
+                            <select id="filter-type" class="flex-1 bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">Semua Tipe Produk</option>
+                                ${productTypes.map(t => `<option value="${t}" ${state.selectedProductType === t ? 'selected' : ''}>${t}</option>`).join('')}
+                            </select>
+                            <select id="filter-avail" class="w-36 bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">Ketersediaan</option>
+                                <option value="in stock" ${state.selectedAvailability === 'in stock' ? 'selected' : ''}>In Stock</option>
+                                <option value="out of stock" ${state.selectedAvailability === 'out of stock' ? 'selected' : ''}>Out of Stock</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Counter & Result Header -->
+                    <div class="flex items-center justify-between px-1">
+                        <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Daftar Produk (${state.products.length})</span>
+                    </div>
+
+                    <!-- Product List or States -->
+                    <div id="product-list-container" class="space-y-3 pb-6">
+                        ${state.loading ? `
+                            <div class="flex flex-col items-center justify-center py-16 space-y-3">
+                                <div class="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                                <p class="text-xs text-gray-500 font-medium">Memuat produk...</p>
+                            </div>
+                        ` : state.products.length === 0 ? `
+                            <div class="flex flex-col items-center justify-center py-16 bg-white rounded-3xl border border-dashed border-gray-200 p-6 text-center shadow-sm">
+                                <div class="w-14 h-14 bg-gray-100 text-gray-400 rounded-full flex items-center justify-center text-2xl mb-3">
+                                    <i class="fa-solid fa-box-open"></i>
+                                </div>
+                                <h3 class="font-semibold text-gray-800 text-sm">Tidak ada produk ditemukan</h3>
+                                <p class="text-xs text-gray-500 mt-1">Coba sesuaikan kata kunci pencarian atau buat produk baru.</p>
+                            </div>
+                        ` : state.products.map(product => `
+                            <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col gap-2 relative">
+                                <div class="flex items-start justify-between">
+                                    <div>
+                                        <span class="inline-block px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-semibold rounded-md mb-1">${product.product_type || 'Apple Device'}</span>
+                                        <h3 class="font-semibold text-gray-900 text-sm leading-snug">${product.title}</h3>
+                                    </div>
+                                    <span class="px-2 py-0.5 text-[10px] font-medium rounded-full ${product.availability === 'in stock' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}">
+                                        ${product.availability || 'Unknown'}
+                                    </span>
+                                </div>
+                                <p class="text-xs text-gray-500 line-clamp-2">${product.description || 'Tidak ada deskripsi.'}</p>
+                                <div class="pt-2 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
+                                    <span class="font-mono text-[11px] text-gray-400">ID: ${product.item_group_id}</span>
+                                    <div class="flex items-center gap-1.5">
+                                        <button onclick="editProduct('${product.item_group_id}')" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors">
+                                            <i class="fa-solid fa-pen-to-square mr-1"></i> Edit
+                                        </button>
+                                        <button onclick="promptDelete('${product.item_group_id}')" class="p-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors">
+                                            <i class="fa-solid fa-trash-can text-xs"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+
+            // Bind list event listeners
+            document.getElementById('search-input').addEventListener('input', (e) => {
+                state.searchQuery = e.target.value;
+                debounceFetch();
+            });
+            document.getElementById('filter-type').addEventListener('change', (e) => {
+                state.selectedProductType = e.target.value;
+                fetchProducts();
+            });
+            document.getElementById('filter-avail').addEventListener('change', (e) => {
+                state.selectedAvailability = e.target.value;
+                fetchProducts();
+            });
+        }
+
+        // Debounce helper for search
+        let searchTimeout;
+        function debounceFetch() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                fetchProducts();
+            }, 400);
+        }
+
+        function renderProductFormPage() {
+            const isEdit = state.formMode === 'edit';
+            const p = state.currentProduct || {};
+
+            appTitle.innerHTML = isEdit ? `Edit Produk Apple` : `Tambah Produk Baru`;
+            backBtn.classList.remove('hidden');
+            addProductBtn.classList.add('hidden');
+
+            // Helper for parsing JSON fields safely
+            const formatJson = (val) => {
+                if (!val) return '';
+                if (typeof val === 'string') return val;
+                return JSON.stringify(val, null, 2);
+            };
+
+            mainContent.innerHTML = `
+                <form id="product-form" class="p-4 space-y-4 pb-20">
+                    <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm space-y-3">
+                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Informasi Utama</h3>
+                        
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">Item Group ID *</label>
+                            <input type="text" name="item_group_id" required ${isEdit ? 'readonly' : ''} value="${p.item_group_id || ''}" 
+                                placeholder="Contoh: IPHONE-15-PRO" 
+                                class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${isEdit ? 'text-gray-500 bg-gray-100 cursor-not-allowed' : ''}">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">Judul Produk (Title) *</label>
+                            <input type="text" name="title" required value="${p.title || ''}" placeholder="iPhone 15 Pro Max 256GB" 
+                                class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">Deskripsi</label>
+                            <textarea name="description" rows="3" placeholder="Deskripsi lengkap produk..." 
+                                class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">${p.description || ''}</textarea>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-1">Ketersediaan</label>
+                                <select name="availability" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="in stock" ${p.availability === 'in stock' ? 'selected' : ''}>In Stock</option>
+                                    <option value="out of stock" ${p.availability === 'out of stock' ? 'selected' : ''}>Out of Stock</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-1">Kondisi</label>
+                                <select name="condition" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="new" ${p.condition === 'new' ? 'selected' : ''}>New</option>
+                                    <option value="refurbished" ${p.condition === 'refurbished' ? 'selected' : ''}>Refurbished</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-1">Brand</label>
+                                <input type="text" name="brand" value="${p.brand || 'Apple'}" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-1">Product Type</label>
+                                <input type="text" name="product_type" value="${p.product_type || ''}" placeholder="Smartphones" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">Link URL</label>
+                            <input type="text" name="link" value="${p.link || ''}" placeholder="https://apple.com/id/iphone..." class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">Google Product Category</label>
+                            <input type="text" name="google_product_category" value="${p.google_product_category || ''}" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+
+                    <!-- Variant & Advanced JSON Fields -->
+                    <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm space-y-3">
+                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Atribut & Varian (JSON)</h3>
+                        
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">Variant Color (JSON Array/Object)</label>
+                            <textarea name="variant_color" rows="2" placeholder='["Natural Titanium", "Blue Titanium"]' class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl font-mono text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">${formatJson(p.variant_color)}</textarea>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">Variant Size (JSON Array/Object)</label>
+                            <textarea name="variant_size" rows="2" placeholder='["128GB", "256GB", "512GB"]' class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl font-mono text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">${formatJson(p.variant_size)}</textarea>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">Main Features (JSON)</label>
+                            <textarea name="main_features" rows="2" placeholder='["A17 Pro chip", "Titanium design"]' class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl font-mono text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">${formatJson(p.main_features)}</textarea>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">Sub Features (JSON)</label>
+                            <textarea name="sub_features" rows="2" placeholder='{"camera": "48MP Main"}' class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl font-mono text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">${formatJson(p.sub_features)}</textarea>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-1">Headline</label>
+                                <input type="text" name="headline" value="${p.headline || ''}" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-1">Band</label>
+                                <input type="text" name="band" value="${p.band || ''}" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">Quantity to Sell on Facebook</label>
+                            <input type="number" name="quantity_to_sell_on_facebook" value="${p.quantity_to_sell_on_facebook || 10}" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+
+                    <!-- Custom Labels -->
+                    <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm space-y-3">
+                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Custom Labels</h3>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="text" name="custom_label_0" value="${p.custom_label_0 || ''}" placeholder="Label 0" class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <input type="text" name="custom_label_1" value="${p.custom_label_1 || ''}" placeholder="Label 1" class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <input type="text" name="custom_label_2" value="${p.custom_label_2 || ''}" placeholder="Label 2" class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <input type="text" name="custom_label_3" value="${p.custom_label_3 || ''}" placeholder="Label 3" class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <input type="text" name="custom_label_4" value="${p.custom_label_4 || ''}" placeholder="Label 4" class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <input type="text" name="custom_label_5" value="${p.custom_label_5 || ''}" placeholder="Label 5" class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+
+                    <!-- Sticky Bottom Action Bar -->
+                    <div class="fixed bottom-0 left-0 right-0 max-w-[500px] mx-auto bg-white/90 backdrop-blur-md border-t border-gray-200 p-3 flex gap-3 z-20">
+                        <button type="button" id="cancel-form-btn" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 rounded-xl text-sm transition-colors">Batal</button>
+                        <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-xl text-sm transition-colors shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-floppy-disk"></i> Simpan
+                        </button>
+                    </div>
+                </form>
+            `;
+
+            // Bind Form events
+            document.getElementById('cancel-form-btn').addEventListener('click', () => {
+                state.view = 'list';
+                render();
+            });
+
+            document.getElementById('product-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const payload = {};
+                
+                const jsonFields = ['variant_color', 'variant_size', 'main_features', 'sub_features'];
+
+                for (let [key, value] of formData.entries()) {
+                    if (jsonFields.includes(key) && value.trim()) {
+                        try {
+                            payload[key] = JSON.parse(value);
+                        } catch (err) {
+                            // If invalid JSON, send as raw string or empty object/array fallback
+                            try {
+                                payload[key] = eval(value);
+                            } catch {
+                                payload[key] = value;
+                            }
+                        }
+                    } else if (key === 'quantity_to_sell_on_facebook') {
+                        payload[key] = value ? parseInt(value, 10) : null;
+                    } else {
+                        payload[key] = value === '' ? null : value;
+                    }
+                }
+
+                saveProduct(payload, isEdit, p.item_group_id);
+            });
+        }
+
+        // Global functions exposed for event bindings
+        window.editProduct = function(itemGroupId) {
+            const product = state.products.find(p => p.item_group_id === itemGroupId);
+            if (product) {
+                state.currentProduct = product;
+                state.formMode = 'edit';
+                state.view = 'form';
+                render();
+            }
+        };
+
+        window.promptDelete = function(itemGroupId) {
+            state.deleteTargetId = itemGroupId;
+            deleteModal.classList.remove('hidden');
+        };
+
+        function render() {
+            if (state.view === 'list') {
+                renderProductListPage();
+            } else if (state.view === 'form') {
+                renderProductFormPage();
+            }
+        }
+
+        // Event listeners for primary UI navigation
+        addProductBtn.addEventListener('click', () => {
+            state.currentProduct = null;
+            state.formMode = 'create';
+            state.view = 'form';
+            render();
+        });
+
+        backBtn.addEventListener('click', () => {
+            state.view = 'list';
+            render();
+        });
+
+        cancelDeleteBtn.addEventListener('click', () => {
+            deleteModal.classList.add('hidden');
+            state.deleteTargetId = null;
+        });
+
+        confirmDeleteBtn.addEventListener('click', () => {
+            if (state.deleteTargetId) {
+                deleteProductApi(state.deleteTargetId);
+                deleteModal.classList.add('hidden');
+                state.deleteTargetId = null;
+            }
+        });
+
+        // Initialize App on load
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchProducts();
+        });
     </script>
 </body>
 </html>
