@@ -1,47 +1,861 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Apple Produk Kelola Produk</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<style>
-body{font-family:'Inter',sans-serif;background:#f3f4f6;margin:0;padding:0}
-.mobile-container{max-width:500px;width:100%;height:100%;margin:0 auto;display:flex;flex-direction:column;overflow:hidden;background:#fff;box-shadow:0 10px 25px -5px rgba(0,0,0,.1)}
-@media(min-width:501px){body{display:flex;justify-content:center;align-items:center;height:100%}.mobile-container{height:90vh;border-radius:2rem;border:8px solid #1f2937}}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apple Produk Kelola Produk v5</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        appleDark: '#1d1d1f',
+                        appleGray: '#f5f5f7',
+                        appleBorder: '#d2d2d7',
+                        appleBlue: '#0066cc',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #fbfbfd; color: #1d1d1f; }
+        .glass-nav { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #d2d2d7; border-radius: 2px; }
+        ::-webkit-scrollbar-thumb:hover { background: #aeaeb2; }
+    </style>
 </head>
-<body>
-<div id="app" class="mobile-container">
-<header class="bg-gray-900 text-white px-4 py-3 flex items-center justify-between shadow-md z-10">
-<div class="flex items-center space-x-3"><button id="back-btn" class="hidden text-gray-300 hover:text-white p-2"><i class="fa-solid fa-arrow-left text-lg"></i></button><h1 id="app-title" class="text-lg font-semibold tracking-wide flex items-center gap-2"><i class="fa-brands fa-apple text-xl"></i> Apple Produk</h1></div>
-<div><button id="add-product-btn" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1.5 rounded-xl font-medium shadow flex items-center gap-1.5"><i class="fa-solid fa-plus"></i> Baru</button></div>
-</header>
-<main class="flex-1 overflow-y-auto relative bg-gray-50 flex flex-col" id="main-content"></main>
-<div id="toast-container" class="absolute bottom-4 left-4 right-4 z-50 pointer-events-none flex flex-col gap-2 items-center"></div>
-<div id="delete-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4"><div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl"><div class="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-xl mb-4 mx-auto"><i class="fa-solid fa-triangle-exclamation"></i></div><h3 class="text-lg font-bold text-gray-900 text-center mb-1">Hapus Produk?</h3><p class="text-sm text-gray-500 text-center mb-6">Tindakan ini tidak dapat dibatalkan dari sistem.</p><div class="flex space-x-3"><button id="cancel-delete" class="flex-1 bg-gray-100 text-gray-700 font-medium py-2.5 rounded-xl">Batal</button><button id="confirm-delete" class="flex-1 bg-red-600 text-white font-medium py-2.5 rounded-xl">Hapus</button></div></div></div>
-</div>
-<script>
-const API_BASE="https://jhpbtooefyzdndstlzva.supabase.co/functions/v1/apple-produk-kelola-produk";
-let state={view:'list',formMode:'create',products:[],loading:false,searchQuery:'',selectedProductType:'',selectedAvailability:'',currentProduct:null,deleteTargetId:null};
-const mainContent=document.getElementById('main-content'),backBtn=document.getElementById('back-btn'),addProductBtn=document.getElementById('add-product-btn'),appTitle=document.getElementById('app-title'),toastContainer=document.getElementById('toast-container'),deleteModal=document.getElementById('delete-modal');
-const esc=v=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-function showToast(message,type='success'){const t=document.createElement('div');t.className=`${type==='success'?'bg-gray-900':'bg-red-600'} text-white px-4 py-3 rounded-2xl shadow-xl text-sm font-medium flex items-center gap-3`;t.innerHTML=`<i class="fa-solid ${type==='success'?'fa-circle-check text-emerald-400':'fa-circle-exclamation'}"></i><span>${esc(message)}</span>`;toastContainer.appendChild(t);setTimeout(()=>t.remove(),3500)}
-async function fetchProducts(){state.loading=true;render();try{let u=API_BASE,p=new URLSearchParams();if(state.searchQuery)p.append('search',state.searchQuery);if(state.selectedProductType)p.append('product_type',state.selectedProductType);if(state.selectedAvailability)p.append('availability',state.selectedAvailability);if(p.toString())u+='?'+p;const r=await fetch(u);if(!r.ok)throw Error('Gagal mengambil data produk');const d=await r.json();state.products=Array.isArray(d)?d:(d.data||[])}catch(e){console.error(e);state.products=[];showToast('Gagal memuat daftar produk','error')}finally{state.loading=false;render()}}
-async function saveProduct(payload,isEdit,id){try{const r=await fetch(isEdit?`${API_BASE}/${id}`:API_BASE,{method:isEdit?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});if(!r.ok){const e=await r.json().catch(()=>({}));throw Error(e.message||'Gagal menyimpan produk')}showToast(isEdit?'Produk berhasil diperbarui!':'Produk baru berhasil ditambahkan!');state.view='list';await fetchProducts()}catch(e){console.error(e);showToast(e.message,'error')}}
-async function deleteProductApi(id){try{const r=await fetch(`${API_BASE}/${id}`,{method:'DELETE'});if(!r.ok)throw Error();showToast('Produk berhasil dihapus');fetchProducts()}catch(e){showToast('Gagal menghapus produk','error')}}
-function renderProductListPage(){appTitle.innerHTML='<i class="fa-brands fa-apple text-xl"></i> Apple Produk';backBtn.classList.add('hidden');addProductBtn.classList.remove('hidden');const types=[...new Set(state.products.map(p=>p.product_type).filter(Boolean))];mainContent.innerHTML=`<div class="p-4 space-y-4"><div class="space-y-2"><div class="relative"><span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400"><i class="fa-solid fa-magnifying-glass"></i></span><input id="search-input" value="${esc(state.searchQuery)}" placeholder="Cari produk Apple..." class="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></div><div class="flex gap-2"><select id="filter-type" class="flex-1 bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs"><option value="">Semua Tipe Produk</option>${types.map(t=>`<option value="${esc(t)}" ${state.selectedProductType===t?'selected':''}>${esc(t)}</option>`).join('')}</select><select id="filter-avail" class="w-36 bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs"><option value="">Ketersediaan</option><option value="in stock" ${state.selectedAvailability==='in stock'?'selected':''}>In Stock</option><option value="out of stock" ${state.selectedAvailability==='out of stock'?'selected':''}>Out of Stock</option></select></div></div><div class="px-1 text-xs font-semibold text-gray-500 uppercase tracking-wider">Daftar Produk (${state.products.length})</div><div class="space-y-3 pb-6">${state.loading?'<div class="text-center py-16 text-xs text-gray-500">Memuat produk...</div>':state.products.length===0?'<div class="text-center py-16 bg-white rounded-3xl border border-dashed border-gray-200"><i class="fa-solid fa-box-open text-2xl text-gray-400"></i><p class="font-semibold text-gray-800 text-sm mt-3">Tidak ada produk ditemukan</p></div>':state.products.map(p=>`<div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm"><div class="flex items-start justify-between gap-2"><div><span class="inline-block px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-semibold rounded-md mb-1">${esc(p.product_type||'Apple Device')}</span><h3 class="font-semibold text-gray-900 text-sm">${esc(p.title)}</h3></div><span class="px-2 py-0.5 text-[10px] rounded-full ${p.availability==='in stock'?'bg-emerald-50 text-emerald-600':'bg-amber-50 text-amber-600'}">${esc(p.availability||'Unknown')}</span></div><p class="text-xs text-gray-500 line-clamp-2 mt-2">${esc(p.description||'Tidak ada deskripsi.')}</p><div class="pt-2 mt-2 border-t border-gray-100 flex items-center justify-between"><span class="font-mono text-[10px] text-gray-400">ID: ${esc(p.item_group_id)}</span><div class="flex gap-1.5"><button onclick="editProduct('${esc(p.item_group_id)}')" class="px-3 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-lg"><i class="fa-solid fa-pen-to-square mr-1"></i>Edit</button><button onclick="promptDelete('${esc(p.item_group_id)}')" class="p-1.5 bg-red-50 text-red-600 rounded-lg"><i class="fa-solid fa-trash-can text-xs"></i></button></div></div></div>`).join('')}</div></div>`;document.getElementById('search-input').oninput=e=>{state.searchQuery=e.target.value;clearTimeout(window.searchTimeout);window.searchTimeout=setTimeout(fetchProducts,400)};document.getElementById('filter-type').onchange=e=>{state.selectedProductType=e.target.value;fetchProducts()};document.getElementById('filter-avail').onchange=e=>{state.selectedAvailability=e.target.value;fetchProducts()}}
-function parseArray(v){if(Array.isArray(v))return v;if(!v)return[];try{const x=JSON.parse(v);return Array.isArray(x)?x:[]}catch{return[]}}
-function inputRow(type,data={}){if(type==='color')return `<div class="json-row grid grid-cols-1 gap-2 p-3 bg-gray-50 rounded-xl border border-gray-200"><input data-key="color" value="${esc(data.color)}" placeholder="Color" class="json-color px-3 py-2 bg-white border rounded-lg text-sm"><input data-key="image_link" value="${esc(data.image_link)}" placeholder="Image Link" class="json-color px-3 py-2 bg-white border rounded-lg text-xs"><input data-key="additional_image_link" value="${esc(data.additional_image_link)}" placeholder="Additional Image Link" class="json-color px-3 py-2 bg-white border rounded-lg text-xs"><button type="button" onclick="this.parentElement.remove()" class="text-red-600 text-xs text-left"><i class="fa-solid fa-trash mr-1"></i>Hapus color</button></div>`;return `<div class="json-row grid grid-cols-2 gap-2 p-3 bg-gray-50 rounded-xl border border-gray-200"><input data-key="size" value="${esc(data.size)}" placeholder="Size" class="json-size px-3 py-2 bg-white border rounded-lg text-sm"><input data-key="price" type="number" value="${data.price??''}" placeholder="Price" class="json-size px-3 py-2 bg-white border rounded-lg text-sm"><input data-key="sale_price" type="number" value="${data.sale_price??''}" placeholder="Sale Price" class="json-size px-3 py-2 bg-white border rounded-lg text-sm"><button type="button" onclick="this.parentElement.remove()" class="text-red-600 text-xs text-left"><i class="fa-solid fa-trash mr-1"></i>Hapus size</button></div>`}
-function featureRow(value='',name='feature'){return `<div class="feature-row flex gap-2"><input data-feature="${name}" value="${esc(value)}" placeholder="Feature" class="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm"><button type="button" onclick="this.parentElement.remove()" class="px-3 text-red-600"><i class="fa-solid fa-trash"></i></button></div>`}
-function renderProductFormPage(){const edit=state.formMode==='edit',p=state.currentProduct||{};appTitle.textContent=edit?'Edit Produk Apple':'Tambah Produk Baru';backBtn.classList.remove('hidden');addProductBtn.classList.add('hidden');const colors=parseArray(p.variant_color),sizes=parseArray(p.variant_size),main=parseArray(p.main_features),sub=parseArray(p.sub_features);mainContent.innerHTML=`<form id="product-form" class="p-4 space-y-4 pb-24"><section class="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm space-y-3"><h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Informasi Utama</h3>${field('item_group_id','Item Group ID *',p.item_group_id,'Contoh: IPHONE-15-PRO',edit)}${field('title','Judul Produk (Title) *',p.title,'iPhone 15 Pro Max 256GB')}${field('description','Deskripsi',p.description,'Deskripsi lengkap produk...',false,true)}<div class="grid grid-cols-2 gap-3">${selectField('availability','Ketersediaan',p.availability,[['in stock','In Stock'],['out of stock','Out of Stock']])}${selectField('condition','Kondisi',p.condition,[['new','New'],['refurbished','Refurbished']])}</div><div class="grid grid-cols-2 gap-3">${field('brand','Brand',p.brand||'Apple')}${field('product_type','Product Type',p.product_type,'Smartphones')}</div>${field('link','Link URL',p.link,'https://apple.com/...')}${field('google_product_category','Google Product Category',p.google_product_category)}</section><section class="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm space-y-3"><div class="flex items-center justify-between"><h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Variant Color (JSON Array of Objects)</h3><button type="button" onclick="addColor()" class="text-xs bg-gray-900 text-white px-3 py-1.5 rounded-lg"><i class="fa-solid fa-plus mr-1"></i>Tambah</button></div><div id="color-list" class="space-y-2">${colors.map(x=>inputRow('color',x)).join('')}</div></section><section class="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm space-y-3"><div class="flex items-center justify-between"><h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Variant Size (JSON Array of Objects)</h3><button type="button" onclick="addSize()" class="text-xs bg-gray-900 text-white px-3 py-1.5 rounded-lg"><i class="fa-solid fa-plus mr-1"></i>Tambah</button></div><div id="size-list" class="space-y-2">${sizes.map(x=>inputRow('size',x)).join('')}</div></section><section class="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm space-y-3"><div class="flex items-center justify-between"><h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Main Features (JSON Array)</h3><button type="button" onclick="addFeature('main_features')" class="text-xs bg-gray-900 text-white px-3 py-1.5 rounded-lg"><i class="fa-solid fa-plus mr-1"></i>Tambah</button></div><div id="main-features" class="space-y-2">${main.map(x=>featureRow(x,'main_features')).join('')}</div><div class="flex items-center justify-between pt-3 border-t"><h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Sub Features (JSON Array)</h3><button type="button" onclick="addFeature('sub_features')" class="text-xs bg-gray-900 text-white px-3 py-1.5 rounded-lg"><i class="fa-solid fa-plus mr-1"></i>Tambah</button></div><div id="sub-features" class="space-y-2">${sub.map(x=>featureRow(x,'sub_features')).join('')}</div></section><section class="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm space-y-3"><h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Custom Labels</h3><div class="grid grid-cols-2 gap-2">${[0,1,2,3].map(i=>`<input name="custom_label_${i}" value="${esc(p['custom_label_'+i])}" placeholder="Label ${i}" class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs">`).join('')}</div></section><section class="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm space-y-3"><h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Lainnya</h3>${field('quantity_to_sell_on_facebook','Quantity to Sell on Facebook',p.quantity_to_sell_on_facebook??10,'',false,false,'number')}</section><div class="fixed bottom-0 left-0 right-0 max-w-[500px] mx-auto bg-white/95 backdrop-blur-md border-t border-gray-200 p-3 flex gap-3 z-20"><button type="button" id="cancel-form-btn" class="flex-1 bg-gray-100 text-gray-700 font-medium py-2.5 rounded-xl text-sm">Batal</button><button type="submit" class="flex-1 bg-blue-600 text-white font-medium py-2.5 rounded-xl text-sm shadow-lg"><i class="fa-solid fa-floppy-disk mr-1"></i>Simpan</button></div></form>`;document.getElementById('cancel-form-btn').onclick=()=>{state.view='list';render()};document.getElementById('product-form').onsubmit=e=>{e.preventDefault();const fd=new FormData(e.target),payload={};for(const [k,v] of fd.entries())payload[k]=k==='quantity_to_sell_on_facebook'?(v?parseInt(v,10):null):(v===''?null:v);payload.variant_color=[...document.querySelectorAll('#color-list .json-row')].map(r=>Object.fromEntries([...r.querySelectorAll('input')].map(i=>[i.dataset.key,i.value]))).filter(x=>x.color||x.image_link||x.additional_image_link);payload.variant_size=[...document.querySelectorAll('#size-list .json-row')].map(r=>Object.fromEntries([...r.querySelectorAll('input')].map(i=>[i.dataset.key,i.type==='number'?(i.value===''?null:Number(i.value)):i.value]))).filter(x=>x.size||x.price!==null||x.sale_price!==null);payload.main_features=[...document.querySelectorAll('#main-features input')].map(i=>i.value.trim()).filter(Boolean);payload.sub_features=[...document.querySelectorAll('#sub-features input')].map(i=>i.value.trim()).filter(Boolean);saveProduct(payload,edit,p.item_group_id)}}
-function field(name,label,value='',placeholder='',readonly=false,textarea=false,type='text'){return `<div><label class="block text-xs font-semibold text-gray-700 mb-1">${label}</label>${textarea?`<textarea name="${name}" rows="3" placeholder="${esc(placeholder)}" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm">${esc(value)}</textarea>`:`<input type="${type}" name="${name}" ${readonly?'readonly':''} value="${esc(value)}" placeholder="${esc(placeholder)}" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm ${readonly?'text-gray-500 bg-gray-100':''}">`}</div>`}
-function selectField(name,label,value,opts){return `<div><label class="block text-xs font-semibold text-gray-700 mb-1">${label}</label><select name="${name}" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm">${opts.map(o=>`<option value="${o[0]}" ${value===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select></div>`}
-window.addColor=()=>document.getElementById('color-list').insertAdjacentHTML('beforeend',inputRow('color',{}));window.addSize=()=>document.getElementById('size-list').insertAdjacentHTML('beforeend',inputRow('size',{}));window.addFeature=name=>document.getElementById(name==='main_features'?'main-features':'sub-features').insertAdjacentHTML('beforeend',featureRow('',name));window.editProduct=id=>{const p=state.products.find(x=>x.item_group_id===id);if(p){state.currentProduct=p;state.formMode='edit';state.view='form';render()}};window.promptDelete=id=>{state.deleteTargetId=id;deleteModal.classList.remove('hidden')};
-function render(){state.view==='list'?renderProductListPage():renderProductFormPage()}
-addProductBtn.onclick=()=>{state.currentProduct=null;state.formMode='create';state.view='form';render()};backBtn.onclick=()=>{state.view='list';render()};document.getElementById('cancel-delete').onclick=()=>{deleteModal.classList.add('hidden');state.deleteTargetId=null};document.getElementById('confirm-delete').onclick=()=>{if(state.deleteTargetId)deleteProductApi(state.deleteTargetId);deleteModal.classList.add('hidden');state.deleteTargetId=null};window.addEventListener('DOMContentLoaded',fetchProducts);
-</script>
+<body class="antialiased selection:bg-blue-500 selection:text-white flex justify-center bg-gray-200">
+
+    <div id="app-container" class="w-full max-w-[500px] h-screen max-h-screen flex flex-col overflow-hidden bg-[#fbfbfd] shadow-2xl relative">
+
+        <!-- Header / Navbar (List View) -->
+        <header id="main-header" class="sticky top-0 z-40 glass-nav border-b border-appleBorder/60 px-4 py-3 flex items-center justify-between shrink-0">
+            <div class="flex items-center space-x-2.5 cursor-pointer" onclick="app.navigateTo('list')">
+                <div class="w-8 h-8 rounded-lg bg-appleDark text-white flex items-center justify-center shadow-sm">
+                    <i class="fa-brands fa-apple text-base"></i>
+                </div>
+                <div>
+                    <h1 class="font-semibold text-sm tracking-tight leading-tight">Apple Kelola</h1>
+                    <p class="text-[10px] text-gray-500">v5 Full Schema</p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-2">
+                <button onclick="app.openCreatePage()" class="inline-flex items-center space-x-1.5 bg-black hover:bg-gray-800 text-white px-3 py-1.5 rounded-full text-xs font-medium transition shadow-sm">
+                    <i class="fa-solid fa-plus text-[10px]"></i>
+                    <span>Tambah</span>
+                </button>
+                <button onclick="app.fetchProducts()" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 transition" title="Refresh Data">
+                    <i class="fa-solid fa-rotate text-xs" id="refresh-icon"></i>
+                </button>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto min-h-0 relative flex flex-col">
+            
+            <!-- Toast Notification Container -->
+            <div id="toast-container" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 flex flex-col space-y-2 pointer-events-none w-[90%] max-w-[460px]"></div>
+
+            <!-- Product List Page -->
+            <div id="view-list" class="p-4 space-y-4 flex-1">
+                <!-- Search & Filter Controls -->
+                <div class="bg-white p-3.5 rounded-2xl border border-appleBorder/60 shadow-sm space-y-3">
+                    <div class="relative w-full">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                            <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                        </span>
+                        <input type="text" id="search-input" oninput="app.handleSearch()" placeholder="Cari produk Apple..." 
+                            class="w-full pl-9 pr-3.5 py-2 bg-appleGray border border-transparent rounded-xl text-xs focus:bg-white focus:border-black focus:outline-none transition">
+                    </div>
+
+                    <div class="flex gap-2 items-center">
+                        <select id="filter-type" onchange="app.handleFilter()" class="flex-1 bg-appleGray border border-transparent rounded-xl px-2.5 py-2 text-xs focus:bg-white focus:border-black focus:outline-none transition">
+                            <option value="">Semua Tipe</option>
+                        </select>
+                        <select id="filter-availability" onchange="app.handleFilter()" class="flex-1 bg-appleGray border border-transparent rounded-xl px-2.5 py-2 text-xs focus:bg-white focus:border-black focus:outline-none transition">
+                            <option value="">Semua Stok</option>
+                            <option value="in stock">In Stock</option>
+                            <option value="out of stock">Out of Stock</option>
+                            <option value="preorder">Preorder</option>
+                        </select>
+                    </div>
+
+                    <div class="flex justify-between items-center pt-1 px-1">
+                        <div id="product-count" class="text-[11px] font-medium text-gray-500">
+                            Memuat...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div id="loading-state" class="py-16 flex flex-col items-center justify-center text-center">
+                    <div class="w-10 h-10 border-3 border-gray-200 border-t-black rounded-full animate-spin mb-3"></div>
+                    <p class="text-gray-500 font-medium text-xs">Menghubungkan ke Supabase...</p>
+                </div>
+
+                <!-- Empty State -->
+                <div id="empty-state" class="hidden py-16 flex flex-col items-center justify-center text-center bg-white rounded-2xl border border-appleBorder/60 p-6">
+                    <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 text-lg mb-3">
+                        <i class="fa-solid fa-box-open"></i>
+                    </div>
+                    <h3 class="text-sm font-semibold text-gray-900 mb-1">Tidak ada produk</h3>
+                    <p class="text-xs text-gray-500 max-w-[240px] mb-4">Belum ada produk yang cocok atau database kosong.</p>
+                    <button onclick="app.openCreatePage()" class="bg-black text-white px-4 py-2 rounded-full text-xs font-medium hover:bg-gray-800 transition">
+                        Tambah Produk Baru
+                    </button>
+                </div>
+
+                <!-- Product List Container -->
+                <div id="product-grid" class="space-y-3 pb-12">
+                    <!-- Dynamic cards inserted here -->
+                </div>
+            </div>
+
+            <div id="view-form-page" class="hidden absolute inset-0 bg-[#fbfbfd] z-30 flex flex-col">
+                <!-- Sub-Page Header -->
+                <div class="px-4 py-3.5 border-b border-appleBorder/60 flex items-center justify-between bg-white/80 backdrop-blur-md shrink-0">
+                    <div class="flex items-center space-x-3">
+                        <button onclick="app.navigateTo('list')" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 transition">
+                            <i class="fa-solid fa-arrow-left text-xs"></i>
+                        </button>
+                        <h3 id="form-page-title" class="font-semibold text-sm text-gray-900">Tambah Produk Baru</h3>
+                    </div>
+                </div>
+
+                <!-- Sub-Page Scrollable Content -->
+                <div class="flex-1 overflow-y-auto min-h-0 p-4 space-y-4">
+                    <form id="product-form" onsubmit="app.handleFormSubmit(event)" class="space-y-4 pb-24">
+                        <input type="hidden" id="form-mode" value="create">
+                        <input type="hidden" id="form-original-id" value="">
+
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-gray-700 uppercase tracking-wider">Item Group ID *</label>
+                            <input type="text" id="input-item_group_id" required placeholder="misal: IPHONE-15-PRO"
+                                class="w-full px-3 py-2.5 bg-white border border-appleBorder/60 rounded-xl text-xs focus:border-black focus:outline-none transition shadow-sm">
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-gray-700 uppercase tracking-wider">Judul Produk *</label>
+                            <input type="text" id="input-title" required placeholder="misal: Apple iPhone 15 Pro Max"
+                                class="w-full px-3 py-2.5 bg-white border border-appleBorder/60 rounded-xl text-xs focus:border-black focus:outline-none transition shadow-sm">
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-gray-700 uppercase tracking-wider">Deskripsi *</label>
+                            <textarea id="input-description" required rows="3" placeholder="Deskripsi lengkap produk..."
+                                class="w-full px-3 py-2.5 bg-white border border-appleBorder/60 rounded-xl text-xs focus:border-black focus:outline-none transition resize-none shadow-sm"></textarea>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="space-y-1">
+                                <label class="text-[11px] font-semibold text-gray-700 uppercase tracking-wider">Ketersediaan</label>
+                                <select id="input-availability" class="w-full px-3 py-2.5 bg-white border border-appleBorder/60 rounded-xl text-xs focus:border-black focus:outline-none transition shadow-sm">
+                                    <option value="in stock">In Stock</option>
+                                    <option value="out of stock">Out of Stock</option>
+                                    <option value="preorder">Preorder</option>
+                                </select>
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="text-[11px] font-semibold text-gray-700 uppercase tracking-wider">Kondisi</label>
+                                <select id="input-condition" class="w-full px-3 py-2.5 bg-white border border-appleBorder/60 rounded-xl text-xs focus:border-black focus:outline-none transition shadow-sm">
+                                    <option value="new">New</option>
+                                    <option value="refurbished">Refurbished</option>
+                                    <option value="used">Used</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="space-y-1">
+                                <label class="text-[11px] font-semibold text-gray-700 uppercase tracking-wider">Brand</label>
+                                <input type="text" id="input-brand" value="Apple" placeholder="Apple"
+                                    class="w-full px-3 py-2.5 bg-white border border-appleBorder/60 rounded-xl text-xs focus:border-black focus:outline-none transition shadow-sm">
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="text-[11px] font-semibold text-gray-700 uppercase tracking-wider">Tipe Produk</label>
+                                <input type="text" id="input-product_type" placeholder="Smartphones"
+                                    class="w-full px-3 py-2.5 bg-white border border-appleBorder/60 rounded-xl text-xs focus:border-black focus:outline-none transition shadow-sm">
+                            </div>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-gray-700 uppercase tracking-wider">Link URL Produk</label>
+                            <input type="url" id="input-link" placeholder="https://apple.com/id/iphone"
+                                class="w-full px-3 py-2.5 bg-white border border-appleBorder/60 rounded-xl text-xs focus:border-black focus:outline-none transition shadow-sm">
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-gray-700 uppercase tracking-wider">Google Product Category</label>
+                            <input type="text" id="input-google_product_category" placeholder="Electronics > Communications..."
+                                class="w-full px-3 py-2.5 bg-white border border-appleBorder/60 rounded-xl text-xs focus:border-black focus:outline-none transition shadow-sm">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="space-y-1">
+                                <label class="text-[11px] font-semibold text-gray-700 uppercase tracking-wider">Qty FB</label>
+                                <input type="number" id="input-quantity_to_sell_on_facebook" value="10"
+                                    class="w-full px-3 py-2.5 bg-white border border-appleBorder/60 rounded-xl text-xs focus:border-black focus:outline-none transition shadow-sm">
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="text-[11px] font-semibold text-gray-700 uppercase tracking-wider">Headline</label>
+                                <input type="text" id="input-headline" placeholder="Titanium..."
+                                    class="w-full px-3 py-2.5 bg-white border border-appleBorder/60 rounded-xl text-xs focus:border-black focus:outline-none transition shadow-sm">
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 p-3 rounded-2xl border border-appleBorder/60 space-y-3">
+                            <h4 class="text-xs font-bold text-gray-800 uppercase tracking-wider">Custom Labels (0 - 5)</h4>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-semibold text-gray-600">CustomLabel 0</label>
+                                    <input type="text" id="input-custom_label_0" placeholder="Flagship" class="w-full px-2.5 py-2 bg-white border border-appleBorder/60 rounded-xl text-xs">
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-semibold text-gray-600">CustomLabel 1</label>
+                                    <input type="text" id="input-custom_label_1" placeholder="2024" class="w-full px-2.5 py-2 bg-white border border-appleBorder/60 rounded-xl text-xs">
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-semibold text-gray-600">CustomLabel 2</label>
+                                    <input type="text" id="input-custom_label_2" placeholder="Promo" class="w-full px-2.5 py-2 bg-white border border-appleBorder/60 rounded-xl text-xs">
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-semibold text-gray-600">CustomLabel 3</label>
+                                    <input type="text" id="input-custom_label_3" placeholder="Tier 1" class="w-full px-2.5 py-2 bg-white border border-appleBorder/60 rounded-xl text-xs">
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-semibold text-gray-600">CustomLabel 4</label>
+                                    <input type="text" id="input-custom_label_4" placeholder="Apple" class="w-full px-2.5 py-2 bg-white border border-appleBorder/60 rounded-xl text-xs">
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-semibold text-gray-600">CustomLabel 5</label>
+                                    <input type="text" id="input-custom_label_5" placeholder="New" class="w-full px-2.5 py-2 bg-white border border-appleBorder/60 rounded-xl text-xs">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 p-3 rounded-2xl border border-appleBorder/60 space-y-3">
+                            <h4 class="text-xs font-bold text-gray-800 uppercase tracking-wider">Variant Color & Image</h4>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-semibold text-gray-600">Color Name</label>
+                                    <input type="text" id="input-color" placeholder="Natural Titanium" class="w-full px-2.5 py-2 bg-white border border-appleBorder/60 rounded-xl text-xs">
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-semibold text-gray-600">Image Link</label>
+                                    <input type="url" id="input-image_link" placeholder="https://..." class="w-full px-2.5 py-2 bg-white border border-appleBorder/60 rounded-xl text-xs">
+                                </div>
+                            </div>
+                            <div class="space-y-1 pt-1">
+                                <label class="text-[10px] font-semibold text-gray-600">Additional Image Link</label>
+                                <input type="url" id="input-additional_image_link" placeholder="https://..." class="w-full px-2.5 py-2 bg-white border border-appleBorder/60 rounded-xl text-xs">
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 p-3 rounded-2xl border border-appleBorder/60 space-y-3">
+                            <h4 class="text-xs font-bold text-gray-800 uppercase tracking-wider">Variant Size & Pricing</h4>
+                            <div class="grid grid-cols-3 gap-2">
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-semibold text-gray-600">Size</label>
+                                    <input type="text" id="input-size" placeholder="256GB" class="w-full px-2 py-2 bg-white border border-appleBorder/60 rounded-xl text-xs">
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-semibold text-gray-600">Price (IDR)</label>
+                                    <input type="number" id="input-price" placeholder="19999000" class="w-full px-2 py-2 bg-white border border-appleBorder/60 rounded-xl text-xs">
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-semibold text-gray-600">Sale Price</label>
+                                    <input type="number" id="input-sale_price" placeholder="18999000" class="w-full px-2 py-2 bg-white border border-appleBorder/60 rounded-xl text-xs">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-gray-700 uppercase tracking-wider">Main Features (Koma-separated)</label>
+                            <input type="text" id="input-main_features" placeholder="A17 Pro chip, Titanium design"
+                                class="w-full px-3 py-2.5 bg-white border border-appleBorder/60 rounded-xl text-xs focus:border-black focus:outline-none transition shadow-sm">
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-gray-700 uppercase tracking-wider">Sub Features (Koma-separated)</label>
+                            <input type="text" id="input-sub_features" placeholder="Action button, USB-C"
+                                class="w-full px-3 py-2.5 bg-white border border-appleBorder/60 rounded-xl text-xs focus:border-black focus:outline-none transition shadow-sm">
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-gray-700 uppercase tracking-wider">Band (Watch)</label>
+                            <input type="text" id="input-band" placeholder="Solo Loop"
+                                class="w-full px-3 py-2.5 bg-white border border-appleBorder/60 rounded-xl text-xs focus:border-black focus:outline-none transition shadow-sm">
+                        </div>
+
+                        <!-- Bottom Action Bar -->
+                        <div class="absolute bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-appleBorder/60 flex space-x-3 z-20">
+                            <button type="button" onclick="app.navigateTo('list')" class="flex-1 py-3 rounded-2xl text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700 transition shadow-sm">
+                                Batal
+                            </button>
+                            <button type="submit" id="submit-btn" class="flex-1 py-3 rounded-2xl text-xs font-semibold bg-black hover:bg-gray-800 text-white transition shadow-sm flex items-center justify-center space-x-1.5">
+                                <span>Simpan Produk</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </main>
+
+        <div id="delete-modal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4">
+            <div class="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl text-center space-y-3.5">
+                <div class="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-lg mx-auto">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <h3 class="font-semibold text-sm text-gray-900">Hapus Produk Ini?</h3>
+                <p id="delete-modal-text" class="text-xs text-gray-500">Tindakan ini akan menghapus produk secara permanen.</p>
+                <div class="flex space-x-2.5 pt-1">
+                    <button onclick="app.closeDeleteModal()" class="flex-1 py-2.5 rounded-full text-xs font-medium bg-gray-100 hover:bg-gray-200 text-gray-700 transition">
+                        Batal
+                    </button>
+                    <button id="confirm-delete-btn" onclick="app.executeDelete()" class="flex-1 py-2.5 rounded-full text-xs font-medium bg-red-600 hover:bg-red-700 text-white transition">
+                        Ya, Hapus
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const API_BASE_URL = "https://jhpbtooefyzdndstlzva.supabase.co/functions/v1/apple-produk-kelola-produk";
+
+        class AppManager {
+            constructor() {
+                this.products = [];
+                this.filteredProducts = [];
+                this.currentDeleteId = null;
+                this.init();
+            }
+
+            async init() {
+                await this.fetchProducts();
+            }
+
+            showToast(message, type = 'success') {
+                const container = document.getElementById('toast-container');
+                if(!container) return;
+                const toast = document.createElement('div');
+                
+                const bgColors = {
+                    success: 'bg-appleDark text-white',
+                    error: 'bg-red-600 text-white',
+                    info: 'bg-blue-600 text-white'
+                };
+
+                const icons = {
+                    success: 'fa-circle-check text-green-400',
+                    error: 'fa-circle-xmark text-red-200',
+                    info: 'fa-circle-info text-blue-200'
+                };
+
+                toast.className = `pointer-events-auto flex items-center space-x-2.5 px-3.5 py-2.5 rounded-2xl shadow-xl text-xs font-medium transform transition-all duration-300 translate-y-2 opacity-0 ${bgColors[type] || bgColors.success}`;
+                toast.innerHTML = `
+                    <i class="fa-solid ${icons[type] || icons.success} text-sm"></i>
+                    <span>${message}</span>
+                `;
+
+                container.appendChild(toast);
+
+                setTimeout(() => {
+                    toast.classList.remove('translate-y-2', 'opacity-0');
+                }, 10);
+
+                setTimeout(() => {
+                    toast.classList.add('translate-y-2', 'opacity-0');
+                    setTimeout(() => toast.remove(), 300);
+                }, 4000);
+            }
+
+            async fetchProducts() {
+                const loadingEl = document.getElementById('loading-state');
+                const emptyEl = document.getElementById('empty-state');
+                const gridEl = document.getElementById('product-grid');
+                const refreshIcon = document.getElementById('refresh-icon');
+
+                if(loadingEl) loadingEl.classList.remove('hidden');
+                if(emptyEl) emptyEl.classList.add('hidden');
+                if(gridEl) gridEl.innerHTML = '';
+                if(refreshIcon) refreshIcon.classList.add('animate-spin');
+
+                try {
+                    const response = await fetch(API_BASE_URL, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    
+                    if (Array.isArray(result)) {
+                        this.products = result;
+                    } else if (result.data && Array.isArray(result.data)) {
+                        this.products = result.data;
+                    } else if (result.products && Array.isArray(result.products)) {
+                        this.products = result.products;
+                    } else {
+                        this.products = [];
+                    }
+
+                    this.filteredProducts = [...this.products];
+                    this.populateTypeFilter();
+                    this.renderProducts();
+                    this.showToast('Data produk berhasil dimuat', 'success');
+
+                } catch (error) {
+                    console.error('Fetch error:', error);
+                    this.showToast(`Error: ${error.message}`, 'error');
+                    if(emptyEl) emptyEl.classList.remove('hidden');
+                    const countEl = document.getElementById('product-count');
+                    if(countEl) countEl.innerText = 'Gagal memuat';
+                } finally {
+                    if(loadingEl) loadingEl.classList.add('hidden');
+                    if(refreshIcon) refreshIcon.classList.remove('animate-spin');
+                }
+            }
+
+            populateTypeFilter() {
+                const select = document.getElementById('filter-type');
+                if(!select) return;
+                const currentVal = select.value;
+                const types = [...new Set(this.products.map(p => p.product_type || p.ProductType).filter(Boolean))];
+                
+                select.innerHTML = '<option value="">Semua Tipe</option>';
+                types.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t;
+                    opt.textContent = t;
+                    if (t === currentVal) opt.selected = true;
+                    select.appendChild(opt);
+                });
+            }
+
+            handleSearch() {
+                this.applyFilters();
+            }
+
+            handleFilter() {
+                this.applyFilters();
+            }
+
+            applyFilters() {
+                const searchInput = document.getElementById('search-input');
+                const typeSelect = document.getElementById('filter-type');
+                const availSelect = document.getElementById('filter-availability');
+
+                const query = searchInput ? searchInput.value.toLowerCase() : '';
+                const selectedType = typeSelect ? typeSelect.value : '';
+                const selectedAvailability = availSelect ? availSelect.value : '';
+
+                this.filteredProducts = this.products.filter(p => {
+                    const title = (p.title || p.Title || '').toLowerCase();
+                    const brand = (p.brand || p.Brand || '').toLowerCase();
+                    const desc = (p.description || p.Description || '').toLowerCase();
+                    const type = p.product_type || p.ProductType || '';
+                    const avail = (p.availability || p.Availability || '').toLowerCase();
+
+                    const matchesQuery = title.includes(query) || brand.includes(query) || desc.includes(query);
+                    const matchesType = !selectedType || type === selectedType;
+                    const matchesAvail = !selectedAvailability || avail.includes(selectedAvailability);
+
+                    return matchesQuery && matchesType && matchesAvail;
+                });
+
+                this.renderProducts();
+            }
+
+            extractVariantImage(p) {
+                const vc = p.variant_color || p.VariantColor;
+                if (Array.isArray(vc) && vc.length > 0 && vc[0].image_link) {
+                    return vc[0].image_link;
+                }
+                if (typeof vc === 'string') {
+                    try {
+                        const parsed = JSON.parse(vc);
+                        if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].image_link) {
+                            return parsed[0].image_link;
+                        }
+                    } catch (e) {}
+                }
+                return p.image_link || p.ImageLink || p.image || null;
+            }
+
+            extractVariantSizeLabel(p) {
+                const vs = p.variant_size || p.VariantSize;
+                if (Array.isArray(vs) && vs.length > 0) {
+                    const first = vs[0];
+                    if (typeof first === 'object' && first.size) {
+                        return `${first.size}${first.price ? ' (Rp ' + Number(first.price).toLocaleString('id-ID') + ')' : ''}`;
+                    }
+                }
+                if (typeof vs === 'string') {
+                    try {
+                        const parsed = JSON.parse(vs);
+                        if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].size) {
+                            return parsed[0].size;
+                        }
+                    } catch (e) {
+                        return vs;
+                    }
+                }
+                return p.variant_size || p.VariantSize || null;
+            }
+
+            renderProducts() {
+                const gridEl = document.getElementById('product-grid');
+                const emptyEl = document.getElementById('empty-state');
+                const countEl = document.getElementById('product-count');
+
+                if(countEl) countEl.innerText = `${this.filteredProducts.length} dari ${this.products.length} produk`;
+
+                if (!gridEl) return;
+
+                if (this.filteredProducts.length === 0) {
+                    gridEl.innerHTML = '';
+                    if(emptyEl) emptyEl.classList.remove('hidden');
+                    return;
+                }
+
+                if(emptyEl) emptyEl.classList.add('hidden');
+                gridEl.innerHTML = '';
+
+                this.filteredProducts.forEach(p => {
+                    const id = p.item_group_id || p.ItemGroupId || p.id || '';
+                    const title = p.title || p.Title || 'Tanpa Judul';
+                    const description = p.description || p.Description || 'Tidak ada deskripsi.';
+                    const productType = p.product_type || p.ProductType || 'Apple Device';
+                    const availability = p.availability || p.Availability || 'in stock';
+                    const brand = p.brand || p.Brand || 'Apple';
+                    const colorObj = p.variant_color || p.VariantColor;
+                    const sizeLabel = this.extractVariantSizeLabel(p);
+                    const link = p.link || p.Link;
+                    const imageLink = this.extractVariantImage(p);
+
+                    let badgeColor = 'bg-green-100 text-green-700';
+                    if (availability.toLowerCase().includes('out')) badgeColor = 'bg-red-100 text-red-700';
+                    else if (availability.toLowerCase().includes('pre')) badgeColor = 'bg-amber-100 text-amber-700';
+
+                    let colorName = '';
+                    if (Array.isArray(colorObj) && colorObj.length > 0) colorName = colorObj[0].color || '';
+                    else if (typeof colorObj === 'string') colorName = colorObj;
+
+                    const card = document.createElement('div');
+                    card.className = 'bg-white rounded-2xl border border-appleBorder/60 p-4 shadow-sm hover:shadow-md transition flex flex-col justify-between space-y-3';
+                    card.innerHTML = `
+                        <div class="space-y-2.5">
+                            ${imageLink ? `
+                            <div class="w-full h-36 bg-gray-50 rounded-xl overflow-hidden flex items-center justify-center border border-gray-100">
+                                <img src="${imageLink}" alt="${title}" class="h-full object-contain p-2" onerror="this.parentElement.style.display='none'">
+                            </div>` : ''}
+                            <div class="flex items-start justify-between gap-2">
+                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-800">${productType}</span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wide ${badgeColor}">${availability}</span>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-sm text-gray-900 tracking-tight leading-snug">${title}</h3>
+                                <p class="text-[10px] text-gray-500 mt-0.5">ID: <span class="font-mono">${id}</span></p>
+                            </div>
+                            <p class="text-xs text-gray-600 line-clamp-2">${description}</p>
+                            
+                            <div class="flex flex-wrap gap-1 pt-0.5">
+                                ${colorName ? `<span class="px-2 py-0.5 rounded-lg bg-gray-50 border border-gray-200 text-[10px] text-gray-700"><i class="fa-solid fa-palette mr-1 text-gray-400"></i>${colorName}</span>` : ''}
+                                ${sizeLabel ? `<span class="px-2 py-0.5 rounded-lg bg-gray-50 border border-gray-200 text-[10px] text-gray-700"><i class="fa-solid fa-hard-drive mr-1 text-gray-400"></i>${sizeLabel}</span>` : ''}
+                            </div>
+                        </div>
+
+                        <div class="pt-3 border-t border-gray-100 flex items-center justify-between">
+                            ${link ? `<a href="${link}" target="_blank" class="text-[11px] text-appleBlue hover:underline flex items-center space-x-1 font-medium"><i class="fa-solid fa-arrow-up-right-from-square"></i><span>Link</span></a>` : '<span></span>'}
+                            <div class="flex items-center space-x-1.5">
+                                <button onclick="app.openEditPage('${id}')" class="px-2.5 py-1 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 text-[11px] font-medium transition flex items-center space-x-1">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                    <span>Edit</span>
+                                </button>
+                                <button onclick="app.promptDelete('${id}')" class="px-2.5 py-1 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 text-[11px] font-medium transition flex items-center space-x-1">
+                                    <i class="fa-solid fa-trash"></i>
+                                    <span>Hapus</span>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    gridEl.appendChild(card);
+                });
+            }
+
+            navigateTo(view) {
+                const viewList = document.getElementById('view-list');
+                const viewForm = document.getElementById('view-form-page');
+                const mainHeader = document.getElementById('main-header');
+
+                if (view === 'list') {
+                    if(viewForm) viewForm.classList.add('hidden');
+                    if(viewList) viewList.classList.remove('hidden');
+                    if(mainHeader) mainHeader.classList.remove('hidden');
+                    this.fetchProducts();
+                }
+            }
+
+            openCreatePage() {
+                document.getElementById('form-page-title').innerText = 'Tambah Produk Baru';
+                document.getElementById('form-mode').value = 'create';
+                document.getElementById('form-original-id').value = '';
+                document.getElementById('product-form').reset();
+                document.getElementById('input-brand').value = 'Apple';
+                document.getElementById('input-quantity_to_sell_on_facebook').value = '10';
+
+                document.getElementById('view-list').classList.add('hidden');
+                document.getElementById('main-header').classList.add('hidden');
+                document.getElementById('view-form-page').classList.remove('hidden');
+            }
+
+            openEditPage(itemGroupId) {
+                const product = this.products.find(p => (p.item_group_id || p.ItemGroupId || p.id) === itemGroupId);
+                if (!product) {
+                    this.showToast('Produk tidak ditemukan', 'error');
+                    return;
+                }
+
+                document.getElementById('form-page-title').innerText = 'Edit Produk Apple';
+                document.getElementById('form-mode').value = 'edit';
+                document.getElementById('form-original-id').value = itemGroupId;
+
+                document.getElementById('input-item_group_id').value = product.item_group_id || product.ItemGroupId || '';
+                document.getElementById('input-title').value = product.title || product.Title || '';
+                document.getElementById('input-description').value = product.description || product.Description || '';
+                document.getElementById('input-availability').value = (product.availability || product.Availability || 'in stock').toLowerCase();
+                document.getElementById('input-condition').value = (product.condition || product.Condition || 'new').toLowerCase();
+                document.getElementById('input-brand').value = product.brand || product.Brand || 'Apple';
+                document.getElementById('input-link').value = product.link || product.Link || '';
+                document.getElementById('input-google_product_category').value = product.google_product_category || product.GoogleProductCategory || '';
+                document.getElementById('input-product_type').value = product.product_type || product.ProductType || '';
+                document.getElementById('input-quantity_to_sell_on_facebook').value = product.quantity_to_sell_on_facebook || product.QuantityToSellOnFacebook || 10;
+                document.getElementById('input-headline').value = product.headline || product.Headline || '';
+                document.getElementById('input-band').value = product.band || product.Band || '';
+
+                // Custom labels 0-5
+                document.getElementById('input-custom_label_0').value = product.custom_label_0 || product.CustomLabel0 || '';
+                document.getElementById('input-custom_label_1').value = product.custom_label_1 || product.CustomLabel1 || '';
+                document.getElementById('input-custom_label_2').value = product.custom_label_2 || product.CustomLabel2 || '';
+                document.getElementById('input-custom_label_3').value = product.custom_label_3 || product.CustomLabel3 || '';
+                document.getElementById('input-custom_label_4').value = product.custom_label_4 || product.CustomLabel4 || '';
+                document.getElementById('input-custom_label_5').value = product.custom_label_5 || product.CustomLabel5 || '';
+
+                // Variant Color extraction
+                const vc = product.variant_color || product.VariantColor;
+                if (Array.isArray(vc) && vc.length > 0) {
+                    document.getElementById('input-color').value = vc[0].color || '';
+                    document.getElementById('input-image_link').value = vc[0].image_link || '';
+                    document.getElementById('input-additional_image_link').value = vc[0].additional_image_link || '';
+                } else if (typeof vc === 'string') {
+                    try {
+                        const parsed = JSON.parse(vc);
+                        if (Array.isArray(parsed) && parsed.length > 0) {
+                            document.getElementById('input-color').value = parsed[0].color || '';
+                            document.getElementById('input-image_link').value = parsed[0].image_link || '';
+                            document.getElementById('input-additional_image_link').value = parsed[0].additional_image_link || '';
+                        }
+                    } catch(e) {
+                        document.getElementById('input-color').value = vc;
+                    }
+                }
+
+                // Variant Size extraction
+                const vs = product.variant_size || product.VariantSize;
+                if (Array.isArray(vs) && vs.length > 0) {
+                    document.getElementById('input-size').value = vs[0].size || '';
+                    document.getElementById('input-price').value = vs[0].price || '';
+                    document.getElementById('input-sale_price').value = vs[0].sale_price || '';
+                } else if (typeof vs === 'string') {
+                    try {
+                        const parsed = JSON.parse(vs);
+                        if (Array.isArray(parsed) && parsed.length > 0) {
+                            document.getElementById('input-size').value = parsed[0].size || '';
+                            document.getElementById('input-price').value = parsed[0].price || '';
+                            document.getElementById('input-sale_price').value = parsed[0].sale_price || '';
+                        }
+                    } catch(e) {
+                        document.getElementById('input-size').value = vs;
+                    }
+                }
+
+                const mainFeatures = product.main_features || product.MainFeatures;
+                document.getElementById('input-main_features').value = Array.isArray(mainFeatures) ? mainFeatures.join(', ') : (mainFeatures || '');
+
+                const subFeatures = product.sub_features || product.SubFeatures;
+                document.getElementById('input-sub_features').value = Array.isArray(subFeatures) ? subFeatures.join(', ') : (subFeatures || '');
+
+                document.getElementById('view-list').classList.add('hidden');
+                document.getElementById('main-header').classList.add('hidden');
+                document.getElementById('view-form-page').classList.remove('hidden');
+            }
+
+            async handleFormSubmit(event) {
+                event.preventDefault();
+                const mode = document.getElementById('form-mode').value;
+                const originalId = document.getElementById('form-original-id').value;
+
+                const mainFeaturesRaw = document.getElementById('input-main_features').value;
+                const mainFeaturesArray = mainFeaturesRaw ? mainFeaturesRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+                const subFeaturesRaw = document.getElementById('input-sub_features').value;
+                const subFeaturesArray = subFeaturesRaw ? subFeaturesRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+                const variantColorPayload = [{
+                    color: document.getElementById('input-color').value || 'Default',
+                    image_link: document.getElementById('input-image_link').value || '',
+                    additional_image_link: document.getElementById('input-additional_image_link').value || ''
+                }];
+
+                const variantSizePayload = [{
+                    size: document.getElementById('input-size').value || 'Standard',
+                    price: parseFloat(document.getElementById('input-price').value) || 0,
+                    sale_price: parseFloat(document.getElementById('input-sale_price').value) || 0
+                }];
+
+                const payload = {
+                    item_group_id: document.getElementById('input-item_group_id').value,
+                    title: document.getElementById('input-title').value,
+                    description: document.getElementById('input-description').value,
+                    availability: document.getElementById('input-availability').value,
+                    condition: document.getElementById('input-condition').value,
+                    brand: document.getElementById('input-brand').value,
+                    link: document.getElementById('input-link').value,
+                    google_product_category: document.getElementById('input-google_product_category').value,
+                    product_type: document.getElementById('input-product_type').value,
+                    quantity_to_sell_on_facebook: parseInt(document.getElementById('input-quantity_to_sell_on_facebook').value) || 0,
+                    
+                    custom_label_0: document.getElementById('input-custom_label_0').value,
+                    custom_label_1: document.getElementById('input-custom_label_1').value,
+                    custom_label_2: document.getElementById('input-custom_label_2').value,
+                    custom_label_3: document.getElementById('input-custom_label_3').value,
+                    custom_label_4: document.getElementById('input-custom_label_4').value,
+                    custom_label_5: document.getElementById('input-custom_label_5').value,
+
+                    variant_color: variantColorPayload,
+                    variant_size: variantSizePayload,
+                    main_features: mainFeaturesArray,
+                    sub_features: subFeaturesArray,
+                    headline: document.getElementById('input-headline').value,
+                    band: document.getElementById('input-band').value
+                };
+
+                const submitBtn = document.getElementById('submit-btn');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i><span>Menyimpan...</span>`;
+
+                try {
+                    let url = API_BASE_URL;
+                    let method = 'POST';
+
+                    if (mode === 'edit') {
+                        url = `${API_BASE_URL}/${originalId}`;
+                        method = 'PUT';
+                    }
+
+                    const response = await fetch(url, {
+                        method: method,
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        const errData = await response.text();
+                        throw new Error(`HTTP ${response.status}: ${errData}`);
+                    }
+
+                    this.showToast(mode === 'create' ? 'Produk berhasil ditambahkan' : 'Produk berhasil diperbarui', 'success');
+                    this.navigateTo('list');
+
+                } catch (error) {
+                    console.error('Submit error:', error);
+                    this.showToast(`Error: ${error.message}`, 'error');
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                }
+            }
+
+            promptDelete(itemGroupId) {
+                this.currentDeleteId = itemGroupId;
+                document.getElementById('delete-modal-text').innerText = `Tindakan ini akan menghapus produk "${itemGroupId}" secara permanen.`;
+                const modal = document.getElementById('delete-modal');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+
+            closeDeleteModal() {
+                this.currentDeleteId = null;
+                const modal = document.getElementById('delete-modal');
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+
+            async executeDelete() {
+                if (!this.currentDeleteId) return;
+
+                const deleteBtn = document.getElementById('confirm-delete-btn');
+                deleteBtn.disabled = true;
+                deleteBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin mr-1"></i> Menghapus...`;
+
+                try {
+                    const url = `${API_BASE_URL}/${this.currentDeleteId}`;
+                    const response = await fetch(url, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+
+                    this.showToast('Produk berhasil dihapus', 'success');
+                    this.closeDeleteModal();
+                    await this.fetchProducts();
+
+                } catch (error) {
+                    console.error('Delete error:', error);
+                    this.showToast(`Error: ${error.message}`, 'error');
+                } finally {
+                    deleteBtn.disabled = false;
+                    deleteBtn.innerHTML = 'Ya, Hapus';
+                }
+            }
+        }
+
+        // Initialize App on load
+        let app;
+        window.addEventListener('DOMContentLoaded', () => {
+            app = new AppManager();
+        });
+    </script>
 </body>
 </html>
