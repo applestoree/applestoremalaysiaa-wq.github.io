@@ -1,0 +1,70 @@
+name: Update Johor address.json
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'postcode-scraper/**'
+      - '.github/workflows/update-johor-address.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        working-directory: postcode-scraper
+        run: pip install -r requirements.txt
+
+      - name: Restore scraper cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            postcode-scraper/cache
+            postcode-scraper/progress.json
+          key: johor-postcode-cache-${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            johor-postcode-cache-${{ github.ref_name }}-
+
+      - name: Scrape pages 2-377
+        working-directory: postcode-scraper
+        run: python scraper.py
+
+      - name: Validate generated JSON
+        working-directory: postcode-scraper
+        run: python - <<'PY'
+import json
+from pathlib import Path
+p = Path('output/address.json')
+data = json.loads(p.read_text(encoding='utf-8'))
+assert data['country'] == 'Malaysia'
+assert set(data['states']) == {'Johor'}
+report = json.loads(Path('output/validation-report.json').read_text(encoding='utf-8'))
+assert report['processedPages'] == 376
+assert report['failedPages'] == []
+assert report['validationErrors'] == []
+print('JSON validation: OK')
+PY
+
+      - name: Publish address.json
+        run: cp postcode-scraper/output/address.json address.json
+
+      - name: Commit address.json
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add address.json
+          git diff --cached --quiet && echo 'No address.json changes' || git commit -m 'Update Malaysia address database - Johor'
+          git push
