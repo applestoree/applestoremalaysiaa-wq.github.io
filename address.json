@@ -1,0 +1,98 @@
+[
+  {
+    "code": "JHR",
+    "name": "Johor",
+    "type": "state",
+    "capital": "Johor Bahru"
+  },
+  {
+    "code": "KDH",
+    "name": "Kedah",
+    "type": "state",
+    "capital": "Alor Setar"
+  },
+  {
+    "code": "KTN",
+    "name": "Kelantan",
+    "type": "state",
+    "capital": "Kota Bharu"
+  },
+  {
+    "code": "MLK",
+    "name": "Melaka",
+    "type": "state",
+    "capital": "Melaka"
+  },
+  {
+    "code": "NSN",
+    "name": "Negeri Sembilan",
+    "type": "state",
+    "capital": "Seremban"
+  },
+  {
+    "code": "PHG",
+    "name": "Pahang",
+    "type": "state",
+    "capital": "Kuantan"
+  },
+  {
+    "code": "PRK",
+    "name": "Perak",
+    "type": "state",
+    "capital": "Ipoh"
+  },
+  {
+    "code": "PLS",
+    "name": "Perlis",
+    "type": "state",
+    "capital": "Kangar"
+  },
+  {
+    "code": "PNG",
+    "name": "Pulau Pinang",
+    "type": "state",
+    "capital": "George Town"
+  },
+  {
+    "code": "SBH",
+    "name": "Sabah",
+    "type": "state",
+    "capital": "Kota Kinabalu"
+  },
+  {
+    "code": "SWK",
+    "name": "Sarawak",
+    "type": "state",
+    "capital": "Kuching"
+  },
+  {
+    "code": "SGR",
+    "name": "Selangor",
+    "type": "state",
+    "capital": "Shah Alam"
+  },
+  {
+    "code": "TRG",
+    "name": "Terengganu",
+    "type": "state",
+    "capital": "Kuala Terengganu"
+  },
+  {
+    "code": "KUL",
+    "name": "Kuala Lumpur",
+    "type": "federal_territory",
+    "capital": "Kuala Lumpur"
+  },
+  {
+    "code": "LBN",
+    "name": "Labuan",
+    "type": "federal_territory",
+    "capital": "Victoria"
+  },
+  {
+    "code": "PJY",
+    "name": "Putrajaya",
+    "type": "federal_territory",
+    "capital": "Putrajaya"
+  }
+]
