@@ -1,8 +1,8 @@
 -- Apple Store Malaysia
--- Migration: create public.apple_produk
--- Source: current Supabase schema for public.apple_produk
+-- Migration: create public.app_product
+-- Source: renamed from public.apple_produk to public.app_product
 
-create table if not exists public.apple_produk (
+create table if not exists public.app_product (
   item_group_id text primary key,
   title text not null,
   description text,
@@ -31,15 +31,15 @@ create table if not exists public.apple_produk (
 );
 
 -- Keep the table protected when exposed through the Supabase Data API.
-alter table public.apple_produk enable row level security;
+alter table public.app_product enable row level security;
 
 -- Public product catalog: read-only for anonymous clients.
-drop policy if exists anon_select_apple_produk on public.apple_produk;
-create policy anon_select_apple_produk
-  on public.apple_produk
+drop policy if exists anon_select_app_product on public.app_product;
+create policy anon_select_app_product
+  on public.app_product
   for select
   to anon
   using (true);
 
-grant select on table public.apple_produk to anon;
-grant select on table public.apple_produk to authenticated;
+grant select on table public.app_product to anon;
+grant select on table public.app_product to authenticated;
